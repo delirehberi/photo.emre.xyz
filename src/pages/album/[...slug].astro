@@ -1,0 +1,247 @@
+---
+import BaseLayout from '@/layouts/BaseLayout.astro';
+import Header from '@/components/Header.astro';
+import { DualSectionGallery } from '@/components/gallery/DualSectionGallery';
+import { getSharedRelayPool } from '@/lib/nostr/pool';
+import { DEFAULT_RELAYS, NOSTR_KINDS } from '@/lib/nostr/config';
+import {
+  parseEventAlbum,
+  parseAlbumCoordinate,
+  formatAlbumCoordinate,
+} from '@/lib/nostr/schemas/album';
+import { parsePhotoEvent } from '@/lib/nostr/schemas/photo';
+import { parseProfileEvent } from '@/lib/nostr/schemas/profile';
+import { partitionPhotos } from '@/lib/nostr/partition';
+import type {
+  EventAlbum,
+  PhotoMetadata,
+  OrganizationProfile,
+} from '@/lib/nostr/types';
+import { getLocaleFromUrl } from '@/lib/i18n/context';
+
+export const prerender = false;
+
+const locale = getLocaleFromUrl(Astro.url);
+const { slug } = Astro.params;
+const photoParam = Astro.url.searchParams.get('photo');
+
+let album: EventAlbum | null = null;
+let officialPhotos: PhotoMetadata[] = [];
+let communityPhotos: PhotoMetadata[] = [];
+let organizerProfile: OrganizationProfile | null = null;
+
+// Fallback demo data for preview or when relays are unreachable
+const fallbackAlbum: EventAlbum = {
+  id: 'demo-album-berlin',
+  pubkey: '32e1827635450ebb3c5a7d12c1f8e7b2b514439ac10a67eef3d9fd9c5c68e245',
+  dTag: slug || 'berlin-hackathon-2026',
+  title: 'Nostr Berlin Hackathon 2026',
+  summary:
+    'Three days of decentralized engineering, lightning rails, and censorship-resistant media workshops.',
+  startDate: 1773000000,
+  endDate: 1773260000,
+  location: 'Berlin, Germany',
+  tags: ['nostr', 'hackathon', 'bitcoin', 'berlin'],
+  coordinate: formatAlbumCoordinate(
+    '32e1827635450ebb3c5a7d12c1f8e7b2b514439ac10a67eef3d9fd9c5c68e245',
+    slug || 'berlin-hackathon-2026',
+  ),
+  createdAt: 1700000000,
+};
+
+const fallbackOfficial: PhotoMetadata[] = [
+  {
+    id: 'demo-photo-1',
+    pubkey: '32e1827635450ebb3c5a7d12c1f8e7b2b514439ac10a67eef3d9fd9c5c68e245',
+    url: 'https://images.unsplash.com/photo-1516035069371-29a1b244cc32?auto=format&fit=crop&w=1600&q=80',
+    sha256: 'e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855',
+    mimeType: 'image/jpeg',
+    dimensions: { width: 1600, height: 1067, aspectRatio: 1.5 },
+    albumCoordinate: fallbackAlbum.coordinate,
+    summary: 'Opening keynote session presentation gear',
+    alt: 'Vintage Camera on Table',
+    exif: {
+      make: 'Sony',
+      model: 'ILCE-7M4',
+      lens: 'FE 24-70mm F2.8 GM II',
+      aperture: 'f/2.8',
+      shutterSpeed: '1/500s',
+      iso: 100,
+      focalLength: '35mm',
+      dateTimeOriginal: '2026:09:06 14:30:00',
+    },
+    createdAt: 1700000100,
+  },
+  {
+    id: 'demo-photo-2',
+    pubkey: '32e1827635450ebb3c5a7d12c1f8e7b2b514439ac10a67eef3d9fd9c5c68e245',
+    url: 'https://images.unsplash.com/photo-1542038784456-1ea8e935640e?auto=format&fit=crop&w=1200&q=80',
+    sha256: 'a3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b866',
+    mimeType: 'image/jpeg',
+    dimensions: { width: 900, height: 1200, aspectRatio: 0.75 },
+    albumCoordinate: fallbackAlbum.coordinate,
+    summary: 'Attendee candid portrait with analog gear',
+    alt: 'Street Photographer Portrait',
+    exif: {
+      make: 'Leica',
+      model: 'Leica M11',
+      lens: 'Summilux-M 35mm f/1.4 ASPH',
+      aperture: 'f/1.4',
+      shutterSpeed: '1/1000s',
+      iso: 64,
+      focalLength: '35mm',
+    },
+    createdAt: 1700000200,
+  },
+];
+
+const fallbackCommunity: PhotoMetadata[] = [
+  {
+    id: 'demo-photo-3',
+    pubkey: 'aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa',
+    url: 'https://images.unsplash.com/photo-1506744038136-46273834b3fb?auto=format&fit=crop&w=1600&q=80',
+    sha256: 'b3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b877',
+    mimeType: 'image/jpeg',
+    dimensions: { width: 1600, height: 900, aspectRatio: 1.7778 },
+    albumCoordinate: fallbackAlbum.coordinate,
+    summary: 'Attendee landscape perspective of Berlin skyline',
+    alt: 'Sunset view from rooftop venue',
+    createdAt: 1700000300,
+  },
+];
+
+const fallbackOrganizer: OrganizationProfile = {
+  pubkey: '32e1827635450ebb3c5a7d12c1f8e7b2b514439ac10a67eef3d9fd9c5c68e245',
+  name: 'emre',
+  displayName: 'Emre Yılmaz',
+  about: 'Nostr engineer & event photographer',
+  picture: 'https://media.emre.xyz/avatar.jpg',
+  nip05: 'emre@emre.xyz',
+  createdAt: 1700000000,
+};
+
+// Query Nostr Relay Mesh
+if (slug) {
+  try {
+    const pool = getSharedRelayPool();
+
+    let albumEvent = null;
+    if (slug.includes(':')) {
+      const parsed = parseAlbumCoordinate(slug);
+      albumEvent = await pool.queryOne(DEFAULT_RELAYS, {
+        kinds: [NOSTR_KINDS.EVENT_ALBUM],
+        authors: [parsed.pubkey],
+        '#d': [parsed.dTag],
+      });
+    } else {
+      albumEvent = await pool.queryOne(DEFAULT_RELAYS, {
+        kinds: [NOSTR_KINDS.EVENT_ALBUM],
+        '#d': [slug],
+      });
+    }
+
+    if (albumEvent) {
+      album = parseEventAlbum(albumEvent);
+
+      // Fetch Kind 1063 photos referencing this coordinate
+      const photoEvents = await pool.queryEvents(DEFAULT_RELAYS, {
+        kinds: [NOSTR_KINDS.PHOTO_METADATA],
+        '#a': [album.coordinate],
+      });
+
+      const parsedPhotos: PhotoMetadata[] = [];
+      for (const pe of photoEvents) {
+        try {
+          parsedPhotos.push(parsePhotoEvent(pe));
+        } catch {
+          // Discard invalid photo events
+        }
+      }
+
+      const partitioned = partitionPhotos(parsedPhotos, album.pubkey);
+      officialPhotos = partitioned.official;
+      communityPhotos = partitioned.community;
+
+      // Fetch Kind 0 Organizer Profile
+      const profileEvent = await pool.queryOne(DEFAULT_RELAYS, {
+        kinds: [NOSTR_KINDS.METADATA],
+        authors: [album.pubkey],
+      });
+
+      if (profileEvent) {
+        organizerProfile = parseProfileEvent(profileEvent);
+      }
+    }
+  } catch (err) {
+    console.warn('Relay query error during album page SSR:', err);
+  }
+}
+
+// Fall back to demo gallery if no live relay data matched
+if (!album) {
+  album = fallbackAlbum;
+  officialPhotos = fallbackOfficial;
+  communityPhotos = fallbackCommunity;
+  organizerProfile = fallbackOrganizer;
+}
+
+// Set edge caching headers with SWR
+Astro.response.headers.set(
+  'Cache-Control',
+  'public, max-age=0, s-maxage=60, stale-while-revalidate=300',
+);
+
+const leadPhotoUrl =
+  officialPhotos[0]?.url || communityPhotos[0]?.url || '/og-image.jpg';
+
+const albumSchema: Record<string, unknown> = {
+  '@context': 'https://schema.org',
+  '@type': 'Event',
+  name: album.title,
+  description: album.summary,
+  image: leadPhotoUrl,
+};
+
+if (album.startDate) {
+  albumSchema.startDate = new Date(album.startDate * 1000).toISOString();
+}
+if (album.endDate) {
+  albumSchema.endDate = new Date(album.endDate * 1000).toISOString();
+}
+if (album.location) {
+  albumSchema.location = {
+    '@type': 'Place',
+    name: album.location,
+  };
+}
+if (organizerProfile) {
+  albumSchema.organizer = {
+    '@type': 'Organization',
+    name: organizerProfile.displayName || organizerProfile.name,
+    description: organizerProfile.about,
+    image: organizerProfile.picture,
+  };
+}
+---
+
+<BaseLayout
+  title={`${album.title} — photo.emre.xyz`}
+  description={album.summary}
+  image={leadPhotoUrl}
+  lang={locale}
+  jsonLd={albumSchema}
+>
+  <Header slot="header" />
+
+  <main class="container mx-auto px-4 sm:px-6 py-8 sm:py-12 max-w-7xl">
+    <DualSectionGallery
+      client:load
+      album={album}
+      officialPhotos={officialPhotos}
+      communityPhotos={communityPhotos}
+      organizerProfile={organizerProfile}
+      initialPhotoHash={photoParam}
+      initialLocale={locale}
+    />
+  </main>
+</BaseLayout>

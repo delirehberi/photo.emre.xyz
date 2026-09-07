@@ -1,0 +1,14 @@
+# photo.emre.xyz robots.txt
+User-agent: *
+Allow: /
+Disallow: /admin
+Disallow: /admin/
+Disallow: /api/admin
+Disallow: /api/admin/
+Disallow: /api/cache
+Disallow: /api/cache/
+Disallow: /events/create
+Disallow: /en/events/create
+
+# Sitemaps
+Sitemap: https://photo.emre.xyz/sitemap.xml

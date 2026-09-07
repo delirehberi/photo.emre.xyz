@@ -1,0 +1,490 @@
+---
+import {
+  Database,
+  HardDrive,
+  Users,
+  Zap,
+  Sparkles,
+  Camera,
+  ShieldCheck,
+  Globe,
+  CheckCircle2,
+} from 'lucide-react';
+import { getLocaleFromUrl } from '@/lib/i18n/context';
+
+const locale = getLocaleFromUrl(Astro.url);
+const isEn = locale === 'en';
+---
+
+<section class="py-20 sm:py-28 border-t border-zinc-200 bg-white">
+  <div class="container mx-auto px-4 sm:px-6 max-w-7xl">
+    <!-- Section Heading -->
+    <div class="max-w-3xl mb-16 sm:mb-20">
+      <h2
+        class="text-3xl sm:text-4xl font-extrabold tracking-tight text-zinc-900 leading-tight"
+      >
+        {
+          isEn
+            ? 'Decentralized & Sovereign Architecture'
+            : 'Merkeziyetsiz ve Egemen Mimari'
+        }
+      </h2>
+      <p class="mt-4 text-base sm:text-lg text-zinc-600 leading-relaxed">
+        {
+          isEn
+            ? 'Phoem does not rely on proprietary databases, corporate servers, or closed silos. Your photos and event galleries live freely on open standards.'
+            : 'Phoem; geleneksel veritabanı, şirket sunucusu veya kilitli platformlara dayanmaz. Fotoğraf ve albümleriniz tamamen açık standartlar üzerinde özgürce yaşar.'
+        }
+      </p>
+    </div>
+
+    <!-- 4 Architectural Pillars Grid -->
+    <div class="grid grid-cols-1 md:grid-cols-2 gap-8 lg:gap-10">
+      <!-- Pillar 1: Zero-Database Invariant -->
+      <div
+        class="relative flex flex-col justify-between rounded-2xl border border-zinc-200/90 bg-zinc-50/50 p-7 sm:p-8 transition-all hover:bg-white hover:shadow-md hover:border-zinc-300"
+      >
+        <div class="space-y-4">
+          <div
+            class="flex h-11 w-11 items-center justify-center rounded-xl bg-zinc-900 text-amber-400 shadow-xs"
+          >
+            <Database className="h-5 w-5" />
+          </div>
+
+          <div>
+            <div class="flex items-center gap-2">
+              <h3 class="text-xl font-bold text-zinc-900 tracking-tight">
+                {
+                  isEn
+                    ? 'Zero-Database (Zero-DB)'
+                    : 'Sıfır Veritabanı (Zero-DB)'
+                }
+              </h3>
+              <span
+                class="font-mono text-[11px] font-semibold text-amber-700 bg-amber-100/70 px-2 py-0.5 rounded"
+              >
+                Nostr Relays
+              </span>
+            </div>
+            <p class="mt-2.5 text-sm text-zinc-600 leading-relaxed">
+              {
+                isEn ? (
+                  <>
+                    No SQL, KV, or D1 database required. Organization profiles (
+                    <code class="font-mono text-xs bg-zinc-200/70 px-1 py-0.5 rounded text-zinc-800">
+                      Kind 0
+                    </code>
+                    ), event albums (
+                    <code class="font-mono text-xs bg-zinc-200/70 px-1 py-0.5 rounded text-zinc-800">
+                      Kind 31922
+                    </code>
+                    ), and photo metadata (
+                    <code class="font-mono text-xs bg-zinc-200/70 px-1 py-0.5 rounded text-zinc-800">
+                      Kind 1063
+                    </code>
+                    ) are stored directly on the censorship-resistant Nostr
+                    relay mesh.
+                  </>
+                ) : (
+                  <>
+                    SQL, KV veya D1 veritabanı barındırılmaz. Organizasyon
+                    profilleri (
+                    <code class="font-mono text-xs bg-zinc-200/70 px-1 py-0.5 rounded text-zinc-800">
+                      Kind 0
+                    </code>
+                    ), etkinlik albümleri (
+                    <code class="font-mono text-xs bg-zinc-200/70 px-1 py-0.5 rounded text-zinc-800">
+                      Kind 31922
+                    </code>
+                    ) ve fotoğraf referansları (
+                    <code class="font-mono text-xs bg-zinc-200/70 px-1 py-0.5 rounded text-zinc-800">
+                      Kind 1063
+                    </code>
+                    ) doğrudan sansürlenemez Nostr röle ağında saklanır.
+                  </>
+                )
+              }
+            </p>
+          </div>
+        </div>
+
+        <div
+          class="mt-6 pt-5 border-t border-zinc-200/70 font-mono text-xs text-zinc-500 flex items-center justify-between"
+        >
+          <span>{isEn ? 'Protocol Standard' : 'Protokol standardı'}</span>
+          <span class="font-semibold text-zinc-700">NIP-01 &bull; NIP-52</span>
+        </div>
+      </div>
+
+      <!-- Pillar 2: Blossom Serverless Storage -->
+      <div
+        class="relative flex flex-col justify-between rounded-2xl border border-zinc-200/90 bg-zinc-50/50 p-7 sm:p-8 transition-all hover:bg-white hover:shadow-md hover:border-zinc-300"
+      >
+        <div class="space-y-4">
+          <div
+            class="flex h-11 w-11 items-center justify-center rounded-xl bg-zinc-900 text-amber-400 shadow-xs"
+          >
+            <HardDrive className="h-5 w-5" />
+          </div>
+
+          <div>
+            <div class="flex items-center gap-2">
+              <h3 class="text-xl font-bold text-zinc-900 tracking-tight">
+                {
+                  isEn
+                    ? 'Content-Addressed Blossom Media'
+                    : 'İçerik Adresli Blossom Medya'
+                }
+              </h3>
+              <span
+                class="font-mono text-[11px] font-semibold text-amber-700 bg-amber-100/70 px-2 py-0.5 rounded"
+              >
+                SHA-256 Blobs
+              </span>
+            </div>
+            <p class="mt-2.5 text-sm text-zinc-600 leading-relaxed">
+              {
+                isEn
+                  ? 'High-resolution photos are stored across content-addressed Blossom servers indexed by SHA-256 hashes. Authenticated via NIP-98 cryptographic HTTP signatures while preserving full EXIF metadata and native resolutions.'
+                  : 'Yüksek çözünürlüklü fotoğraflar, SHA-256 özet değerleriyle içerik adresli Blossom sunucularında depolanır. NIP-98 kriptografik HTTP imzası ile yetkilendirilir, EXIF meta verileri ve piksel boyutları korunur.'
+              }
+            </p>
+          </div>
+        </div>
+
+        <div
+          class="mt-6 pt-5 border-t border-zinc-200/70 font-mono text-xs text-zinc-500 flex items-center justify-between"
+        >
+          <span>{isEn ? 'Verification Engine' : 'Doğrulama motoru'}</span>
+          <span class="font-semibold text-zinc-700">NIP-98 &bull; NIP-94</span>
+        </div>
+      </div>
+
+      <!-- Pillar 3: Crowdsourced Galleries -->
+      <div
+        class="relative flex flex-col justify-between rounded-2xl border border-zinc-200/90 bg-zinc-50/50 p-7 sm:p-8 transition-all hover:bg-white hover:shadow-md hover:border-zinc-300"
+      >
+        <div class="space-y-4">
+          <div
+            class="flex h-11 w-11 items-center justify-center rounded-xl bg-zinc-900 text-amber-400 shadow-xs"
+          >
+            <Users className="h-5 w-5" />
+          </div>
+
+          <div>
+            <div class="flex items-center gap-2">
+              <h3 class="text-xl font-bold text-zinc-900 tracking-tight">
+                {
+                  isEn
+                    ? 'Crowdsourced Attendee Collection'
+                    : 'Topluluk Katılımcı Koleksiyonu'
+                }
+              </h3>
+              <span
+                class="font-mono text-[11px] font-semibold text-amber-700 bg-amber-100/70 px-2 py-0.5 rounded"
+              >
+                Dual Partitions
+              </span>
+            </div>
+            <p class="mt-2.5 text-sm text-zinc-600 leading-relaxed">
+              {
+                isEn
+                  ? 'No more chasing attendees for event photos. Anyone attending can contribute their shots directly with cryptographic verification. Official organizer photos and community contributions are cleanly partitioned.'
+                  : 'Etkinlik bittiğinde fotoğraf toplama çilesi son bulur. Katılımcılar kendi çektikleri kareleri tek tıkla albüme katkı olarak yükleyebilir. Resmi organizatör fotoğrafları ile topluluk fotoğrafları kriptografik imzayla ayrıştırılır.'
+              }
+            </p>
+          </div>
+        </div>
+
+        <div
+          class="mt-6 pt-5 border-t border-zinc-200/70 font-mono text-xs text-zinc-500 flex items-center justify-between"
+        >
+          <span>{isEn ? 'Signature Verification' : 'İmza doğrulama'}</span>
+          <span class="font-semibold text-zinc-700"
+            >Schnorr &bull; secp256k1</span
+          >
+        </div>
+      </div>
+
+      <!-- Pillar 4: Bitcoin Lightning Micro-Incentives -->
+      <div
+        class="relative flex flex-col justify-between rounded-2xl border border-zinc-200/90 bg-zinc-50/50 p-7 sm:p-8 transition-all hover:bg-white hover:shadow-md hover:border-zinc-300"
+      >
+        <div class="space-y-4">
+          <div
+            class="flex h-11 w-11 items-center justify-center rounded-xl bg-zinc-900 text-amber-400 shadow-xs"
+          >
+            <Zap className="h-5 w-5" />
+          </div>
+
+          <div>
+            <div class="flex items-center gap-2">
+              <h3 class="text-xl font-bold text-zinc-900 tracking-tight">
+                {
+                  isEn
+                    ? 'Bitcoin Lightning Micro-Incentives'
+                    : 'Bitcoin Lightning Mikro-Ödemeler'
+                }
+              </h3>
+              <span
+                class="font-mono text-[11px] font-semibold text-amber-700 bg-amber-100/70 px-2 py-0.5 rounded"
+              >
+                WebLN &amp; NWC
+              </span>
+            </div>
+            <p class="mt-2.5 text-sm text-zinc-600 leading-relaxed">
+              {
+                isEn
+                  ? 'Anti-spam measures and media storage costs are seamlessly handled with Lightning satoshi micro-fees. Photographers and organizers can directly receive tips via WebLN, Nostr Wallet Connect (NWC), or LNURL.'
+                  : 'Spam engelleme ve medya depolama giderleri mikro Lightning satoshi ücretleri ile çözülür. Fotoğrafçılar ve organizatörler doğrudan WebLN, Nostr Wallet Connect (NWC) veya LUD-16 LNURL ile bahşiş alabilir.'
+              }
+            </p>
+          </div>
+        </div>
+
+        <div
+          class="mt-6 pt-5 border-t border-zinc-200/70 font-mono text-xs text-zinc-500 flex items-center justify-between"
+        >
+          <span>{isEn ? 'Tips & Verification' : 'Bahşiş &amp; Doğrulama'}</span>
+          <span class="font-semibold text-zinc-700">NIP-57 Zap Receipts</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- High-Aesthetic Event Flow Showcase -->
+    <div
+      class="relative mt-16 sm:mt-20 rounded-3xl border border-zinc-800/90 bg-zinc-950 p-6 sm:p-10 lg:p-12 shadow-2xl overflow-hidden"
+    >
+      <!-- Ambient lighting effects -->
+      <div
+        class="absolute -top-32 -left-32 w-80 h-80 bg-amber-500/10 rounded-full blur-3xl pointer-events-none"
+      >
+      </div>
+      <div
+        class="absolute -bottom-32 -right-32 w-80 h-80 bg-emerald-500/10 rounded-full blur-3xl pointer-events-none"
+      >
+      </div>
+
+      <!-- Top Header -->
+      <div class="relative z-10 max-w-2xl mb-10 sm:mb-12">
+        <div
+          class="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-amber-400/10 border border-amber-400/20 text-amber-400 text-xs font-semibold tracking-wide uppercase mb-3"
+        >
+          <Sparkles className="h-3.5 w-3.5" />
+          <span>
+            {isEn ? 'The Phoem Experience' : 'Phoem Deneyimi'}
+          </span>
+        </div>
+        <h3
+          class="text-2xl sm:text-3xl font-extrabold text-white tracking-tight leading-tight"
+        >
+          {
+            isEn
+              ? 'How Phoem Powers Live Event Stories'
+              : 'Phoem Canlı Etkinlik Hikayelerini Nasıl Güçlendirir'
+          }
+        </h3>
+        <p class="mt-3 text-sm sm:text-base text-zinc-400 leading-relaxed">
+          {
+            isEn
+              ? 'From the first snapshot to an eternal sovereign archive—zero setup friction, lossless quality, and instant global delivery.'
+              : 'İlk deklanşör sesinden sonsuz egemen arşive—sıfır kurulum zahmeti, kayıpsız kalite ve anında küresel erişim.'
+          }
+        </p>
+      </div>
+
+      <!-- 3-Step Interactive Grid -->
+      <div class="relative z-10 grid grid-cols-1 lg:grid-cols-3 gap-6">
+        <!-- Step 1: Capture & Crowdsource -->
+        <div
+          class="group relative flex flex-col justify-between rounded-2xl border border-zinc-800/80 bg-zinc-900/60 p-6 sm:p-7 backdrop-blur-xs transition-all hover:bg-zinc-900/90 hover:border-zinc-700"
+        >
+          <div class="space-y-4">
+            <div class="flex items-center justify-between">
+              <div
+                class="flex h-12 w-12 items-center justify-center rounded-xl bg-amber-500/10 border border-amber-500/20 text-amber-400 shadow-xs transition-transform group-hover:scale-105"
+              >
+                <Camera className="h-6 w-6" />
+              </div>
+              <span
+                class="font-mono text-[11px] font-semibold text-zinc-400 bg-zinc-800/80 border border-zinc-700/60 px-2.5 py-1 rounded-full"
+              >
+                01 &bull; {isEn ? '0-Second Friction' : 'Sıfır Kurulum'}
+              </span>
+            </div>
+
+            <div>
+              <h4
+                class="text-lg font-bold text-zinc-100 tracking-tight group-hover:text-amber-400 transition-colors"
+              >
+                {isEn ? 'Snap & Drop Full-Res' : 'Çek ve Anında Yükle'}
+              </h4>
+              <p class="mt-2 text-sm text-zinc-400 leading-relaxed">
+                {
+                  isEn
+                    ? 'Photographers and attendees drop original photos straight into the event. No account creation, no app download, and zero compression.'
+                    : 'Fotoğrafçılar ve katılımcılar karelerini doğrudan etkinlik albümüne yükler. Hesap açma yok, uygulama indirme yok, kalite kaybı yok.'
+                }
+              </p>
+            </div>
+          </div>
+
+          <div
+            class="mt-6 pt-4 border-t border-zinc-800/80 flex flex-wrap gap-1.5"
+          >
+            <span
+              class="text-[10px] font-mono font-medium px-2 py-0.5 rounded bg-zinc-800 text-zinc-300 border border-zinc-700/50"
+            >
+              {isEn ? 'Lossless RAW & JPEG' : 'Kayıpsız RAW & JPEG'}
+            </span>
+            <span
+              class="text-[10px] font-mono font-medium px-2 py-0.5 rounded bg-zinc-800 text-zinc-300 border border-zinc-700/50"
+            >
+              {isEn ? 'Full EXIF' : 'Tam EXIF'}
+            </span>
+            <span
+              class="text-[10px] font-mono font-medium px-2 py-0.5 rounded bg-zinc-800 text-zinc-300 border border-zinc-700/50"
+            >
+              {isEn ? 'No App Needed' : 'Uygulama Gerekmez'}
+            </span>
+          </div>
+        </div>
+
+        <!-- Step 2: Sovereign Vault & Provenance -->
+        <div
+          class="group relative flex flex-col justify-between rounded-2xl border border-zinc-800/80 bg-zinc-900/60 p-6 sm:p-7 backdrop-blur-xs transition-all hover:bg-zinc-900/90 hover:border-zinc-700"
+        >
+          <div class="space-y-4">
+            <div class="flex items-center justify-between">
+              <div
+                class="flex h-12 w-12 items-center justify-center rounded-xl bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 shadow-xs transition-transform group-hover:scale-105"
+              >
+                <ShieldCheck className="h-6 w-6" />
+              </div>
+              <span
+                class="font-mono text-[11px] font-semibold text-zinc-400 bg-zinc-800/80 border border-zinc-700/60 px-2.5 py-1 rounded-full"
+              >
+                02 &bull; {isEn ? 'True Ownership' : 'Gerçek Sahiplik'}
+              </span>
+            </div>
+
+            <div>
+              <h4
+                class="text-lg font-bold text-zinc-100 tracking-tight group-hover:text-emerald-400 transition-colors"
+              >
+                {isEn ? 'Permanent Provenance' : 'Kriptografik Sahiplik'}
+              </h4>
+              <p class="mt-2 text-sm text-zinc-400 leading-relaxed">
+                {
+                  isEn
+                    ? 'Every photo is cryptographically signed to the author and safely stored across open media relays. Uncensorable, immune to platform shutdown, with direct Lightning tips.'
+                    : 'Her fotoğraf çeken kişinin kriptografik anahtarıyla imzalanır ve açık medya sunucularında saklanır. Sansürlenemez, kapanmaz ve doğrudan Lightning bahşişli.'
+                }
+              </p>
+            </div>
+          </div>
+
+          <div
+            class="mt-6 pt-4 border-t border-zinc-800/80 flex flex-wrap gap-1.5"
+          >
+            <span
+              class="text-[10px] font-mono font-medium px-2 py-0.5 rounded bg-zinc-800 text-zinc-300 border border-zinc-700/50"
+            >
+              {isEn ? 'Permanent Proof' : 'Kalıcı Kanıt'}
+            </span>
+            <span
+              class="text-[10px] font-mono font-medium px-2 py-0.5 rounded bg-zinc-800 text-zinc-300 border border-zinc-700/50"
+            >
+              {isEn ? 'Direct Lightning Tips' : 'Doğrudan Bahşiş'}
+            </span>
+            <span
+              class="text-[10px] font-mono font-medium px-2 py-0.5 rounded bg-zinc-800 text-zinc-300 border border-zinc-700/50"
+            >
+              {isEn ? 'Zero Lock-In' : 'Kilitli Platform Yok'}
+            </span>
+          </div>
+        </div>
+
+        <!-- Step 3: Silky-Smooth Live Showcase -->
+        <div
+          class="group relative flex flex-col justify-between rounded-2xl border border-zinc-800/80 bg-zinc-900/60 p-6 sm:p-7 backdrop-blur-xs transition-all hover:bg-zinc-900/90 hover:border-zinc-700"
+        >
+          <div class="space-y-4">
+            <div class="flex items-center justify-between">
+              <div
+                class="flex h-12 w-12 items-center justify-center rounded-xl bg-sky-500/10 border border-sky-500/20 text-sky-400 shadow-xs transition-transform group-hover:scale-105"
+              >
+                <Globe className="h-6 w-6" />
+              </div>
+              <span
+                class="font-mono text-[11px] font-semibold text-zinc-400 bg-zinc-800/80 border border-zinc-700/60 px-2.5 py-1 rounded-full"
+              >
+                03 &bull; {isEn ? 'Sub-50ms Edge' : 'Işık Hızında'}
+              </span>
+            </div>
+
+            <div>
+              <h4
+                class="text-lg font-bold text-zinc-100 tracking-tight group-hover:text-sky-400 transition-colors"
+              >
+                {isEn ? 'Silky-Smooth Live Gallery' : 'Kusursuz Canlı Galeri'}
+              </h4>
+              <p class="mt-2 text-sm text-zinc-400 leading-relaxed">
+                {
+                  isEn
+                    ? 'Delivered worldwide in milliseconds via edge caching. Dynamic masonry gallery that updates live as the event unfolds, with zero layout shift or jitter.'
+                    : 'Küresel kenar önbellek ile milisaniyeler içinde tüm dünyaya sunulur. Etkinlik anında canlı güncellenen, kaymayan dinamik mozaik galeri.'
+                }
+              </p>
+            </div>
+          </div>
+
+          <div
+            class="mt-6 pt-4 border-t border-zinc-800/80 flex flex-wrap gap-1.5"
+          >
+            <span
+              class="text-[10px] font-mono font-medium px-2 py-0.5 rounded bg-zinc-800 text-zinc-300 border border-zinc-700/50"
+            >
+              {isEn ? 'Zero Layout Shift' : 'Sıfır Kayma (Zero-CLS)'}
+            </span>
+            <span
+              class="text-[10px] font-mono font-medium px-2 py-0.5 rounded bg-zinc-800 text-zinc-300 border border-zinc-700/50"
+            >
+              {isEn ? 'Dual Live Timeline' : 'İkili Canlı Akış'}
+            </span>
+            <span
+              class="text-[10px] font-mono font-medium px-2 py-0.5 rounded bg-zinc-800 text-zinc-300 border border-zinc-700/50"
+            >
+              {isEn ? 'Global Edge CDN' : 'Küresel Kenar CDN'}
+            </span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Bottom Trust & Metric Strip -->
+      <div
+        class="relative z-10 mt-10 pt-6 border-t border-zinc-800/80 grid grid-cols-2 md:grid-cols-4 gap-4 text-xs font-medium text-zinc-300"
+      >
+        <div class="flex items-center gap-2.5">
+          <CheckCircle2 className="h-4 w-4 text-amber-400 shrink-0" />
+          <span>{isEn ? '100% Quality Preserved' : '100% Kayıpsız Kalite'}</span
+          >
+        </div>
+        <div class="flex items-center gap-2.5">
+          <CheckCircle2 className="h-4 w-4 text-emerald-400 shrink-0" />
+          <span>{isEn ? 'Zero Cloud Lock-In' : 'Kilitli Bulut Yok'}</span>
+        </div>
+        <div class="flex items-center gap-2.5">
+          <CheckCircle2 className="h-4 w-4 text-sky-400 shrink-0" />
+          <span>{isEn ? 'Live Crowdsourcing' : 'Canlı Katkı Toplama'}</span>
+        </div>
+        <div class="flex items-center gap-2.5">
+          <CheckCircle2 className="h-4 w-4 text-amber-400 shrink-0" />
+          <span>
+            {isEn ? 'Bitcoin Lightning Ready' : 'Bitcoin Lightning Hazır'}
+          </span>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>

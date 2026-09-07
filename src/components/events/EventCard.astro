@@ -1,0 +1,169 @@
+---
+import {
+  formatEventDateTime,
+  type EventWithOrg,
+} from '@/lib/nostr/events-data';
+import type { Locale } from '@/lib/i18n/dictionary';
+import {
+  getLocaleFromUrl,
+  getDictionary,
+  getLocalizedPath,
+} from '@/lib/i18n/context';
+import { Badge } from '@/components/ui/badge';
+import Button from '@/components/ui/Button.astro';
+import {
+  Calendar,
+  MapPin,
+  Camera,
+  ArrowRight,
+  ShieldCheck,
+  Building2,
+} from 'lucide-react';
+import { getThumbnailUrl } from '@/lib/media';
+
+interface Props {
+  item: EventWithOrg;
+  isPriority?: boolean;
+  locale?: Locale;
+}
+
+const { item, isPriority = false } = Astro.props;
+const locale = Astro.props.locale || getLocaleFromUrl(Astro.url);
+const t = getDictionary(locale);
+
+const albumHref = getLocalizedPath(`/album/${item.album.dTag}`, locale);
+const orgHref = item.org
+  ? getLocalizedPath(`/org/${item.org.pubkey}`, locale)
+  : '#';
+
+const startDate = item.album.startDate
+  ? formatEventDateTime(item.album.startDate, locale, item.album.endDate)
+  : null;
+---
+
+<article
+  class="group flex flex-col overflow-hidden rounded-2xl border border-zinc-200/90 bg-white shadow-xs transition-all duration-300 hover:shadow-md hover:border-zinc-300 focus-within:ring-2 focus-within:ring-amber-500/30"
+>
+  <!-- Card Media Viewport -->
+  <a
+    href={albumHref}
+    class="relative aspect-16/10 w-full overflow-hidden bg-zinc-100 block focus:outline-none"
+    aria-label={locale === 'en'
+      ? `View album ${item.album.title}`
+      : `${item.album.title} albümünü görüntüle`}
+  >
+    {
+      item.album.coverImage ? (
+        <img
+          src={getThumbnailUrl(item.album.coverImage)}
+          alt={item.album.title}
+          class="h-full w-full object-cover transition-transform duration-500 ease-out group-hover:scale-105"
+          loading={isPriority ? 'eager' : 'lazy'}
+          decoding="async"
+        />
+      ) : (
+        <div class="flex h-full w-full items-center justify-center text-zinc-400 bg-zinc-50">
+          <Camera className="h-10 w-10 stroke-1 text-zinc-300" />
+        </div>
+      )
+    }
+
+    <!-- Darkroom Photo Count Pill -->
+    <div class="absolute bottom-3 right-3">
+      <Badge
+        variant="secondary"
+        className="bg-zinc-950/80 text-white backdrop-blur-xs text-[11px] font-mono border-0 shadow-sm gap-1.5 px-2.5 py-1"
+      >
+        <Camera className="h-3 w-3 text-amber-400" />
+        <span>{item.photoCount} {t.events.photosCount}</span>
+      </Badge>
+    </div>
+  </a>
+
+  <!-- Card Body -->
+  <div class="flex flex-1 flex-col p-5 space-y-4">
+    <div class="space-y-2 flex-1">
+      {
+        item.org && (
+          <a
+            href={orgHref}
+            class="inline-flex items-center gap-2 group/org hover:opacity-85 transition-opacity"
+          >
+            {item.org.picture ? (
+              <img
+                src={item.org.picture}
+                alt={item.org.displayName || item.org.name}
+                class="h-5 w-5 rounded-full object-cover border border-zinc-200"
+                loading="lazy"
+                decoding="async"
+              />
+            ) : (
+              <div class="flex h-5 w-5 items-center justify-center rounded-full bg-zinc-100 text-zinc-500">
+                <Building2 className="h-3 w-3" />
+              </div>
+            )}
+            <span class="text-xs font-semibold text-zinc-700 group-hover/org:text-amber-600 transition-colors">
+              {item.org.displayName || item.org.name}
+            </span>
+            {item.org.nip05 && (
+              <span title={`Nostr ID: ${item.org.nip05}`}>
+                <ShieldCheck className="h-3.5 w-3.5 text-amber-500 shrink-0" />
+              </span>
+            )}
+          </a>
+        )
+      }
+
+      <h3
+        class="text-lg font-bold text-zinc-900 tracking-tight line-clamp-1 group-hover:text-amber-600 transition-colors"
+      >
+        <a href={albumHref}>
+          {item.album.title}
+        </a>
+      </h3>
+
+      <p class="text-xs text-zinc-600 line-clamp-2 leading-relaxed">
+        {
+          item.album.summary ||
+            (locale === 'en'
+              ? 'No summary provided for this album yet.'
+              : 'Bu etkinlik albümü için henüz özet girilmedi.')
+        }
+      </p>
+    </div>
+
+    <!-- Card Metadata & Action Footer -->
+    <div
+      class="pt-3 border-t border-zinc-100 flex items-center justify-between text-xs text-zinc-500"
+    >
+      <div class="flex flex-col gap-0.5 min-w-0 pr-2">
+        {
+          startDate && (
+            <span class="flex items-center gap-1.5 truncate">
+              <Calendar className="h-3.5 w-3.5 text-zinc-400 shrink-0" />
+              <span>{startDate}</span>
+            </span>
+          )
+        }
+        {
+          item.album.location && (
+            <span class="flex items-center gap-1.5 truncate">
+              <MapPin className="h-3.5 w-3.5 text-zinc-400 shrink-0" />
+              <span>{item.album.location}</span>
+            </span>
+          )
+        }
+      </div>
+
+      <Button
+        variant="outline"
+        size="sm"
+        href={albumHref}
+        className="h-8 gap-1 text-xs text-zinc-800 hover:bg-zinc-900 hover:text-white border-zinc-200 shrink-0 font-medium inline-flex items-center"
+      >
+        <span>{t.events.viewAlbum}</span>
+        <ArrowRight className="h-3 w-3 shrink-0" />
+      </Button>
+    </div>
+  </div>
+</article>

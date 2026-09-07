@@ -1,0 +1,21 @@
+---
+import BaseLayout from '@/layouts/BaseLayout.astro';
+import Header from '@/components/Header.astro';
+import { AdminPage } from '@/components/admin/AdminPage';
+import { getLocaleFromUrl } from '@/lib/i18n/context';
+
+export const prerender = false;
+
+const locale = getLocaleFromUrl(Astro.url);
+---
+
+<BaseLayout
+  title={locale === 'en' ? 'Admin Panel — Phoem' : 'Yönetim Paneli — Phoem'}
+  lang={locale}
+>
+  <Header slot="header" />
+
+  <main class="min-h-[calc(100vh-16rem)] py-8">
+    <AdminPage client:only="react" initialLocale={locale} />
+  </main>
+</BaseLayout>

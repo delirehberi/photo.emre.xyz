@@ -1,0 +1,25 @@
+---
+import BaseLayout from '@/layouts/BaseLayout.astro';
+import Header from '@/components/Header.astro';
+import { EventCreatePage } from '@/components/events/EventCreatePage';
+import { getLocaleFromUrl, getDictionary } from '@/lib/i18n/context';
+
+export const prerender = false;
+
+const locale = getLocaleFromUrl(Astro.url);
+const t = getDictionary(locale);
+---
+
+<BaseLayout
+  title={`${t.nav.createEvent} — photo.emre.xyz`}
+  description={locale === 'en'
+    ? 'Create a new Nostr photo album for your community or event and share your high-resolution photos.'
+    : 'Topluluğunuz veya etkinliğiniz için yeni bir Nostr fotoğraf albümü oluşturun ve yüksek çözünürlüklü fotoğraflarınızı paylaşın.'}
+  lang={locale}
+>
+  <Header slot="header" />
+
+  <main class="container mx-auto px-4 sm:px-6 py-8 sm:py-12 max-w-7xl">
+    <EventCreatePage client:load initialLocale={locale} />
+  </main>
+</BaseLayout>

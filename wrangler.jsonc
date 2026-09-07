@@ -1,0 +1,13 @@
+{
+  "$schema": "node_modules/wrangler/config-schema.json",
+  "name": "photo-emre-xyz",
+  "compatibility_date": "2024-09-23",
+  "compatibility_flags": ["nodejs_compat"],
+  "pages_build_output_dir": "./dist",
+  "vars": {
+    "PUBLIC_ADMIN_PUBKEY": "46f3c7bb33cc3019049b76dc89dbb96e34c247bdda68b6ad8632682793ff8a1a",
+    "BLOSSOM_SERVER_URL": "https://media.emre.xyz",
+    "PUBLIC_DEFAULT_RELAYS": "wss://relay.emre.xyz,wss://relay.damus.io,wss://relay.primal.net,wss://nos.lol",
+    "PUBLIC_SITE_URL": "https://photo.emre.xyz",
+  },
+}

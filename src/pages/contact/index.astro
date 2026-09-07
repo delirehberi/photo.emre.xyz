@@ -1,0 +1,369 @@
+---
+import BaseLayout from '@/layouts/BaseLayout.astro';
+import Header from '@/components/Header.astro';
+import Button from '@/components/ui/Button.astro';
+import { getLocaleFromUrl } from '@/lib/i18n/context';
+import {
+  Zap,
+  ShieldCheck,
+  ExternalLink,
+  Code2,
+  Mail,
+  Users,
+} from 'lucide-react';
+
+export const prerender = false;
+
+const locale = getLocaleFromUrl(Astro.url);
+---
+
+<BaseLayout
+  title={locale === 'en'
+    ? 'Contact & Community — Phoem'
+    : 'İletişim & Topluluk — Phoem'}
+  description={locale === 'en'
+    ? 'Reach out via the Nostr protocol, Bitcoin Lightning Network, or open-source community channels.'
+    : 'Nostr protokolü, Lightning ağı veya açık kaynak topluluk kanalları üzerinden bizimle iletişime geçin.'}
+  lang={locale}
+>
+  <Header slot="header" />
+
+  <main class="container mx-auto px-4 sm:px-6 py-12 sm:py-20 max-w-5xl">
+    <!-- Hero Header -->
+    <div class="max-w-3xl mx-auto text-center space-y-4 mb-16 sm:mb-20">
+      <h1
+        class="text-4xl sm:text-5xl font-extrabold text-zinc-950 tracking-tight leading-tight text-balance"
+      >
+        {
+          locale === 'en'
+            ? 'Sovereign Contact & Community'
+            : 'Egemen İletişim ve Topluluk'
+        }
+      </h1>
+      <p
+        class="text-base sm:text-lg text-zinc-600 leading-relaxed max-w-2xl mx-auto"
+      >
+        {
+          locale === 'en'
+            ? 'Phoem is built on open communication protocols, censorship-resistant identities, and self-governing communities. For inquiries, feedback, or collaboration, reach out directly via open channels.'
+            : 'Phoem; açık iletişim protokolleri, sansürlenemez kimlikler ve bağımsız topluluklar üzerine kuruludur. Sorularınız, önerileriniz veya iş birlikleri için doğrudan açık kanallardan bize ulaşabilirsiniz.'
+        }
+      </p>
+    </div>
+
+    <!-- Sovereign Communication Grid -->
+    <div class="grid grid-cols-1 md:grid-cols-2 gap-6 sm:gap-8">
+      <!-- Channel 1: Nostr Cryptographic Identity -->
+      <div
+        class="flex flex-col justify-between rounded-2xl border border-zinc-200/90 bg-white p-7 shadow-xs hover:shadow-md hover:border-zinc-300 transition-all"
+      >
+        <div class="space-y-4">
+          <div
+            class="flex h-12 w-12 items-center justify-center rounded-xl bg-zinc-900 text-amber-400 shadow-xs"
+          >
+            <ShieldCheck className="h-6 w-6" />
+          </div>
+
+          <div>
+            <div class="flex items-center gap-2">
+              <h3 class="text-xl font-bold text-zinc-900 tracking-tight">
+                {
+                  locale === 'en'
+                    ? 'Nostr NIP-05 & Direct Message'
+                    : 'Nostr NIP-05 & Doğrudan Mesaj'
+                }
+              </h3>
+              <span
+                class="font-mono text-[11px] font-semibold text-amber-700 bg-amber-50 px-2 py-0.5 rounded border border-amber-500/20"
+              >
+                {locale === 'en' ? 'Open Identity' : 'Açık Kimlik'}
+              </span>
+            </div>
+            <p class="mt-2 text-sm text-zinc-600 leading-relaxed">
+              {
+                locale === 'en'
+                  ? 'Reach out publicly or end-to-end encrypted (NIP-04/44) from any Nostr client (Primal, Coracle, Snort, Damus, or Amethyst).'
+                  : 'Herhangi bir Nostr istemcisinden (Primal, Coracle, Snort, Damus veya Amethyst) kriptografik kimliğimizle herkese açık veya uçtan uca şifreli (NIP-04/44) olarak iletişime geçebilirsiniz.'
+              }
+            </p>
+          </div>
+
+          <div
+            class="p-3.5 rounded-xl bg-zinc-50 border border-zinc-200/80 font-mono text-xs text-zinc-800 flex items-center justify-between"
+          >
+            <div>
+              <span class="text-zinc-400 text-[10px] block font-sans"
+                >{
+                  locale === 'en'
+                    ? 'NIP-05 VERIFIED ADDRESS'
+                    : 'NIP-05 DOĞRULANMIŞ ADRES'
+                }</span
+              >
+              <span class="font-semibold text-zinc-900"
+                >delirehberi@emre.xyz</span
+              >
+            </div>
+            <span
+              class="text-emerald-600 text-xs font-sans font-medium flex items-center gap-1"
+            >
+              <span class="h-2 w-2 rounded-full bg-emerald-500"></span>
+              {locale === 'en' ? 'Active' : 'Aktif'}
+            </span>
+          </div>
+        </div>
+
+        <div class="mt-6 pt-5 border-t border-zinc-100 flex flex-wrap gap-2.5">
+          <Button
+            variant="outline"
+            size="sm"
+            href="https://primal.net/p/delirehberi@emre.xyz"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="h-8 gap-1.5 text-xs border-zinc-200 hover:bg-zinc-900 hover:text-white inline-flex items-center"
+          >
+            <span>{locale === 'en' ? 'Open in Primal' : "Primal'da Aç"}</span>
+            <ExternalLink className="h-3 w-3 shrink-0" />
+          </Button>
+
+          <Button
+            variant="outline"
+            size="sm"
+            href="https://coracle.social/delirehberi@emre.xyz"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="h-8 gap-1.5 text-xs border-zinc-200 hover:bg-zinc-900 hover:text-white inline-flex items-center"
+          >
+            <span
+              >{
+                locale === 'en' ? 'Message on Coracle' : "Coracle'da Mesajlaş"
+              }</span
+            >
+            <ExternalLink className="h-3 w-3 shrink-0" />
+          </Button>
+        </div>
+      </div>
+
+      <!-- Channel 2: Bitcoin Lightning Network Support -->
+      <div
+        class="flex flex-col justify-between rounded-2xl border border-zinc-200/90 bg-white p-7 shadow-xs hover:shadow-md hover:border-zinc-300 transition-all"
+      >
+        <div class="space-y-4">
+          <div
+            class="flex h-12 w-12 items-center justify-center rounded-xl bg-zinc-900 text-amber-400 shadow-xs"
+          >
+            <Zap className="h-6 w-6" />
+          </div>
+
+          <div>
+            <div class="flex items-center gap-2">
+              <h3 class="text-xl font-bold text-zinc-900 tracking-tight">
+                {
+                  locale === 'en'
+                    ? 'Bitcoin Lightning Support & Zap'
+                    : 'Bitcoin Lightning Destek & Zap'
+                }
+              </h3>
+              <span
+                class="font-mono text-[11px] font-semibold text-amber-700 bg-amber-50 px-2 py-0.5 rounded border border-amber-500/20"
+              >
+                WebLN &bull; LNURL
+              </span>
+            </div>
+            <p class="mt-2 text-sm text-zinc-600 leading-relaxed">
+              {
+                locale === 'en'
+                  ? 'Support server and relay infrastructure costs or send a direct tip using our sovereign Lightning address.'
+                  : 'Platformun bağımsızlığını korumak, sunucu ve röle giderlerine destek olmak veya doğrudan bahşiş iletmek için Lightning adresimizi kullanabilirsiniz.'
+              }
+            </p>
+          </div>
+
+          <div
+            class="p-3.5 rounded-xl bg-zinc-50 border border-zinc-200/80 font-mono text-xs text-zinc-800 flex items-center justify-between"
+          >
+            <div>
+              <span class="text-zinc-400 text-[10px] block font-sans"
+                >{
+                  locale === 'en' ? 'LIGHTNING ADDRESS' : 'LIGHTNING ADRESİ'
+                }</span
+              >
+              <span class="font-semibold text-zinc-900"
+                >delirehberi@emre.xyz</span
+              >
+            </div>
+            <span
+              class="text-amber-600 text-xs font-sans font-medium flex items-center gap-1"
+            >
+              ⚡ {locale === 'en' ? 'Zero Commission' : 'Sıfır Komisyon'}
+            </span>
+          </div>
+        </div>
+
+        <div class="mt-6 pt-5 border-t border-zinc-100 flex flex-wrap gap-2.5">
+          <Button
+            variant="outline"
+            size="sm"
+            href="lightning:delirehberi@emre.xyz"
+            className="h-8 gap-1.5 text-xs border-zinc-200 hover:bg-zinc-900 hover:text-white inline-flex items-center"
+          >
+            <span
+              >{
+                locale === 'en'
+                  ? 'Open in Lightning Wallet'
+                  : 'Lightning Cüzdanında Aç'
+              }</span
+            >
+            <Zap className="h-3 w-3 text-amber-500 shrink-0" />
+          </Button>
+        </div>
+      </div>
+
+      <!-- Channel 3: nostr.org.tr Topluluğu -->
+      <div
+        class="flex flex-col justify-between rounded-2xl border border-zinc-200/90 bg-white p-7 shadow-xs hover:shadow-md hover:border-zinc-300 transition-all"
+      >
+        <div class="space-y-4">
+          <div
+            class="flex h-12 w-12 items-center justify-center rounded-xl bg-zinc-900 text-amber-400 shadow-xs"
+          >
+            <Users className="h-6 w-6" />
+          </div>
+
+          <div>
+            <div class="flex items-center gap-2">
+              <h3 class="text-xl font-bold text-zinc-900 tracking-tight">
+                {
+                  locale === 'en'
+                    ? 'nostr.org.tr Community Hub'
+                    : 'nostr.org.tr Topluluk Merkezi'
+                }
+              </h3>
+              <span
+                class="font-mono text-[11px] font-semibold text-amber-700 bg-amber-50 px-2 py-0.5 rounded border border-amber-500/20"
+              >
+                {locale === 'en' ? 'Community' : 'Topluluk'}
+              </span>
+            </div>
+            <p class="mt-2 text-sm text-zinc-600 leading-relaxed">
+              {
+                locale === 'en'
+                  ? 'Phoem is an open initiative developed by the Turkish Nostr ecosystem and the nostr.org.tr community. Explore guides and join our open channels.'
+                  : 'Phoem, Türkiye Nostr ekosistemi ve nostr.org.tr topluluğu tarafından geliştirilen açık bir girişimdir. Etkinliklerinizi platforma taşımak veya topluluk gruplarımıza katılmak için rehberimize göz atın.'
+              }
+            </p>
+          </div>
+
+          <div
+            class="p-3.5 rounded-xl bg-zinc-50 border border-zinc-200/80 font-mono text-xs text-zinc-800"
+          >
+            <span class="text-zinc-400 text-[10px] block font-sans"
+              >{
+                locale === 'en'
+                  ? 'OPEN COMMUNITY PORTAL'
+                  : 'AÇIK TOPLULUK PORTALI'
+              }</span
+            >
+            <span class="font-semibold text-zinc-900">https://nostr.org.tr</span
+            >
+          </div>
+        </div>
+
+        <div class="mt-6 pt-5 border-t border-zinc-100 flex flex-wrap gap-2.5">
+          <Button
+            variant="outline"
+            size="sm"
+            href="https://nostr.org.tr"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="h-8 gap-1.5 text-xs border-zinc-200 hover:bg-zinc-900 hover:text-white inline-flex items-center"
+          >
+            <span
+              >{
+                locale === 'en'
+                  ? 'Visit nostr.org.tr'
+                  : "nostr.org.tr'yi Ziyaret Et"
+              }</span
+            >
+            <ExternalLink className="h-3 w-3 shrink-0" />
+          </Button>
+        </div>
+      </div>
+
+      <!-- Channel 4: Open Source GitHub Repository -->
+      <div
+        class="flex flex-col justify-between rounded-2xl border border-zinc-200/90 bg-white p-7 shadow-xs hover:shadow-md hover:border-zinc-300 transition-all"
+      >
+        <div class="space-y-4">
+          <div
+            class="flex h-12 w-12 items-center justify-center rounded-xl bg-zinc-900 text-amber-400 shadow-xs"
+          >
+            <Code2 className="h-6 w-6" />
+          </div>
+
+          <div>
+            <div class="flex items-center gap-2">
+              <h3 class="text-xl font-bold text-zinc-900 tracking-tight">
+                {
+                  locale === 'en'
+                    ? 'Open Source & Dev Contributions'
+                    : 'Açık Kaynak Kod & Geliştirici Katkısı'
+                }
+              </h3>
+              <span
+                class="font-mono text-[11px] font-semibold text-amber-700 bg-amber-50 px-2 py-0.5 rounded border border-amber-500/20"
+              >
+                GPL / MIT
+              </span>
+            </div>
+            <p class="mt-2 text-sm text-zinc-600 leading-relaxed">
+              {
+                locale === 'en'
+                  ? 'All source code is transparent and public. Feel free to report issues, propose PRs, and suggest architectural enhancements on GitHub.'
+                  : 'Tüm kaynak kodlarımız açık ve şeffaftır. Hata bildirimleri (issues), yeni özellik önerileri (PR) ve mimari geliştirmeler için GitHub üzerinden katkı sağlayabilirsiniz.'
+              }
+            </p>
+          </div>
+
+          <div
+            class="p-3.5 rounded-xl bg-zinc-50 border border-zinc-200/80 font-mono text-xs text-zinc-800"
+          >
+            <span class="text-zinc-400 text-[10px] block font-sans"
+              >{locale === 'en' ? 'DEVELOPER HUB' : 'GELİŞTİRİCİ MERKEZİ'}</span
+            >
+            <span class="font-semibold text-zinc-900"
+              >github.com/delirehberi/photo.emre.xyz</span
+            >
+          </div>
+        </div>
+
+        <div class="mt-6 pt-5 border-t border-zinc-100 flex flex-wrap gap-2.5">
+          <Button
+            variant="outline"
+            size="sm"
+            href="https://github.com/delirehberi"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="h-8 gap-1.5 text-xs border-zinc-200 hover:bg-zinc-900 hover:text-white inline-flex items-center"
+          >
+            <span
+              >{
+                locale === 'en' ? 'GitHub Repository' : 'GitHub Deposuna Git'
+              }</span
+            >
+            <ExternalLink className="h-3 w-3 shrink-0" />
+          </Button>
+
+          <Button
+            variant="outline"
+            size="sm"
+            href="mailto:z@emre.xyz"
+            className="h-8 gap-1.5 text-xs border-zinc-200 hover:bg-zinc-900 hover:text-white inline-flex items-center"
+          >
+            <span>{locale === 'en' ? 'Send Email' : 'E-posta Gönder'}</span>
+            <Mail className="h-3 w-3 text-zinc-500 shrink-0" />
+          </Button>
+        </div>
+      </div>
+    </div>
+  </main>
+</BaseLayout>

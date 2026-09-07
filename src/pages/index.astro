@@ -1,0 +1,225 @@
+---
+import BaseLayout from '@/layouts/BaseLayout.astro';
+import Header from '@/components/Header.astro';
+import HeroShowcase from '@/components/home/HeroShowcase.astro';
+import ArchitecturePillars from '@/components/home/ArchitecturePillars.astro';
+import EventCard from '@/components/events/EventCard.astro';
+import { fetchEventAlbums } from '@/lib/nostr/events-data';
+import Button from '@/components/ui/Button.astro';
+import {
+  getLocaleFromUrl,
+  getDictionary,
+  getLocalizedPath,
+} from '@/lib/i18n/context';
+import {
+  Calendar,
+  ArrowRight,
+  Sparkles,
+  Users,
+  Compass,
+  PlusCircle,
+} from 'lucide-react';
+
+export const prerender = false;
+
+const locale = getLocaleFromUrl(Astro.url);
+const t = getDictionary(locale);
+const allEvents = await fetchEventAlbums();
+// Featured events for homepage (take top 6 for rich grid)
+const featuredEvents = allEvents.slice(0, 6);
+const eventsHref = getLocalizedPath('/events', locale);
+const createEventHref = getLocalizedPath('/events/create', locale);
+---
+
+<BaseLayout
+  title={locale === 'en'
+    ? 'Phoem — Sovereign Event Photo Albums'
+    : 'Phoem — Etkinlikler İçin Egemen Fotoğraf Albümleri'}
+  description={locale === 'en'
+    ? 'Add your organization, create event albums and share high-resolution photos. Attendees can even contribute photos directly.'
+    : 'Organizasyonunuzu ekleyin, etkinlik albümleri oluşturun ve yüksek çözünürlüklü fotoğraflarınızı paylaşın. Katılımcılarınız bile fotoğraflarını yükleyebilir.'}
+  lang={locale}
+>
+  <Header slot="header" />
+
+  <!-- Hero Section -->
+  <HeroShowcase />
+
+  <!-- Featured Photo Albums for Events -->
+  <section class="py-16 sm:py-24 container mx-auto px-4 sm:px-6 max-w-7xl">
+    <div
+      class="flex flex-col sm:flex-row sm:items-end justify-between gap-4 mb-10 sm:mb-12"
+    >
+      <div class="max-w-2xl">
+        <h2 class="text-2xl sm:text-3xl font-bold tracking-tight text-zinc-950">
+          {t.home.featuredTitle}
+        </h2>
+        <p class="mt-2 text-sm text-zinc-600 leading-relaxed">
+          {t.home.featuredSubtitle}
+        </p>
+      </div>
+
+      <Button
+        variant="outline"
+        size="sm"
+        href={eventsHref}
+        className="h-9 border-zinc-200 text-xs font-medium text-zinc-800 hover:bg-zinc-100 shrink-0 inline-flex items-center gap-1.5"
+      >
+        <span>{t.home.allEvents}</span>
+        <ArrowRight className="h-3.5 w-3.5 shrink-0" />
+      </Button>
+    </div>
+
+    <!-- Event Albums Grid or Elevated Empty State -->
+    {
+      featuredEvents.length > 0 ? (
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 sm:gap-8">
+          {featuredEvents.map((item, index) => (
+            <EventCard item={item} isPriority={index === 0} locale={locale} />
+          ))}
+        </div>
+      ) : (
+        <div class="relative overflow-hidden rounded-3xl border border-zinc-200/90 bg-zinc-50/70 p-8 sm:p-12 text-center shadow-xs">
+          <div class="max-w-md mx-auto space-y-4">
+            <div class="inline-flex h-12 w-12 items-center justify-center rounded-2xl bg-amber-100 text-amber-800 shadow-xs mx-auto">
+              <Calendar className="h-6 w-6 stroke-[1.75]" />
+            </div>
+
+            <h3 class="text-xl font-bold text-zinc-950 tracking-tight">
+              {t.events.noEventsTitle}
+            </h3>
+
+            <p class="text-xs sm:text-sm text-zinc-600 leading-relaxed">
+              {t.events.noEventsDesc}
+            </p>
+
+            <div class="pt-3 flex flex-wrap justify-center items-center gap-3">
+              <Button
+                variant="default"
+                size="sm"
+                href={createEventHref}
+                className="gap-2 shadow-xs font-semibold bg-zinc-900 hover:bg-zinc-800 text-white inline-flex items-center"
+              >
+                <PlusCircle className="h-4 w-4 shrink-0" />
+                <span>{t.home.createEventCta}</span>
+              </Button>
+
+              <Button
+                variant="outline"
+                size="sm"
+                href={eventsHref}
+                className="gap-1.5 border-zinc-200 text-zinc-700 hover:bg-zinc-100 inline-flex items-center"
+              >
+                <Compass className="h-4 w-4 shrink-0" />
+                <span>{t.events.title}</span>
+              </Button>
+            </div>
+          </div>
+        </div>
+      )
+    }
+  </section>
+
+  <!-- Sovereign Architecture Pillars -->
+  <ArchitecturePillars />
+
+  <!-- Community Co-Creation & Onboarding Callout -->
+  <section class="py-16 sm:py-20 bg-zinc-100/80 border-t border-zinc-200">
+    <div class="container mx-auto px-4 sm:px-6 max-w-5xl">
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-8 lg:gap-12 items-center">
+        <!-- Community Column -->
+        <div class="space-y-4">
+          <div
+            class="inline-flex h-11 w-11 items-center justify-center rounded-xl bg-amber-100 text-amber-800 shadow-xs"
+          >
+            <Users className="h-5 w-5" />
+          </div>
+
+          <h2
+            class="text-2xl sm:text-3xl font-bold text-zinc-950 tracking-tight"
+          >
+            {t.home.communityCalloutTitle}
+          </h2>
+
+          <p class="text-sm text-zinc-600 leading-relaxed">
+            {t.home.communityCalloutDesc}
+          </p>
+
+          <div class="pt-2">
+            <Button
+              variant="default"
+              size="default"
+              href={eventsHref}
+              className="gap-2 shadow-xs bg-zinc-900 hover:bg-zinc-800 text-white font-medium inline-flex items-center"
+            >
+              <span>{t.home.communityCalloutCta}</span>
+              <ArrowRight className="h-4 w-4 shrink-0" />
+            </Button>
+          </div>
+        </div>
+
+        <!-- Onboarding & Getting Started with Nostr -->
+        <div
+          class="rounded-2xl border border-zinc-200 bg-white p-6 sm:p-7 shadow-xs space-y-4"
+        >
+          <div class="flex items-center gap-2 text-zinc-950 font-bold text-sm">
+            <Sparkles className="h-4 w-4 text-amber-600 shrink-0" />
+            <span
+              >{
+                locale === 'en'
+                  ? 'Getting Started & Access with Nostr'
+                  : 'Nostr ile Başlangıç ve Erişim'
+              }</span
+            >
+          </div>
+
+          <p class="text-xs text-zinc-600 leading-relaxed">
+            {
+              locale === 'en'
+                ? 'Browsing albums on Phoem and viewing photos in full resolution is completely public and requires no account. To publish your own event or contribute photos, you can use your open Nostr cryptographic keys:'
+                : 'Phoem üzerindeki albümleri gezmek ve fotoğrafları tam çözünürlükte görüntülemek tamamen halka açıktır ve hiçbir hesap gerektirmez. Kendi etkinliğinizi açmak veya fotoğraf yüklemek için Nostr açık iletişim anahtarınızı kullanabilirsiniz:'
+            }
+          </p>
+
+          <div class="pt-2 border-t border-zinc-100 flex flex-col gap-2.5">
+            <a
+              href="https://nostr.org.tr"
+              target="_blank"
+              rel="noopener noreferrer"
+              class="flex items-center justify-between p-2.5 rounded-lg border border-zinc-200/80 bg-zinc-50 hover:bg-amber-50/50 hover:border-amber-300 transition-colors text-xs font-medium text-zinc-800 group"
+            >
+              <span
+                >nostr.org.tr ({
+                  locale === 'en'
+                    ? 'Community Guide'
+                    : 'Türkçe Başlangıç Rehberi'
+                })</span
+              >
+              <ArrowRight
+                className="h-3.5 w-3.5 text-zinc-400 group-hover:text-amber-600 transition-colors"
+              />
+            </a>
+
+            <a
+              href="https://nostr.com"
+              target="_blank"
+              rel="noopener noreferrer"
+              class="flex items-center justify-between p-2.5 rounded-lg border border-zinc-200/80 bg-zinc-50 hover:bg-amber-50/50 hover:border-amber-300 transition-colors text-xs font-medium text-zinc-800 group"
+            >
+              <span
+                >nostr.com ({
+                  locale === 'en'
+                    ? 'Global Nostr Resources'
+                    : 'Küresel Nostr Kaynakları'
+                })</span
+              >
+              <ArrowRight
+                className="h-3.5 w-3.5 text-zinc-400 group-hover:text-amber-600 transition-colors"
+              />
+            </a>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+</BaseLayout>

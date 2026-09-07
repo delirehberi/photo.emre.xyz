@@ -1,0 +1,182 @@
+---
+import '../styles/global.css';
+import { getLocaleFromUrl } from '@/lib/i18n/context';
+
+interface Props {
+  title?: string;
+  description?: string;
+  image?: string;
+  lang?: string;
+  jsonLd?: Record<string, unknown> | Array<Record<string, unknown>>;
+}
+
+const detectedLocale = getLocaleFromUrl(Astro.url);
+const lang = Astro.props.lang || detectedLocale;
+const defaultTitle =
+  lang === 'en'
+    ? 'Phoem — Photo Albums for Sovereign Events'
+    : 'Phoem — Etkinlikler İçin Fotoğraf Albümleri';
+const defaultDescription =
+  lang === 'en'
+    ? 'Open-source, independent event photo album platform for communities and organizations. Powered by Nostr and Blossom.'
+    : 'Topluluklar ve organizasyonlar için açık kaynaklı, bağımsız etkinlik fotoğraf albümü platformu. Nostr ve Blossom destekli.';
+
+const {
+  title = defaultTitle,
+  description = defaultDescription,
+  image = '/og-image.jpg',
+  jsonLd,
+} = Astro.props;
+
+const siteOrigin = (Astro.site?.toString() || 'https://photo.emre.xyz').replace(
+  /\/+$/,
+  '',
+);
+
+const canonicalURL = new URL(Astro.url.pathname, siteOrigin);
+
+// Ensure absolute URL for Open Graph and Twitter image preview cards
+const absoluteImageUrl =
+  image.startsWith('http://') || image.startsWith('https://')
+    ? image
+    : `${siteOrigin}${image.startsWith('/') ? '' : '/'}${image}`;
+
+// Compute hreflang alternates for tr and en
+const pathname = Astro.url.pathname;
+let trPath = pathname;
+let enPath = pathname;
+
+if (pathname === '/en' || pathname === '/en/') {
+  trPath = '/';
+  enPath = '/en/';
+} else if (pathname.startsWith('/en/')) {
+  trPath = pathname.slice(3) || '/';
+  enPath = pathname;
+} else {
+  trPath = pathname;
+  enPath = pathname === '/' ? '/en/' : `/en${pathname}`;
+}
+
+const trHref = `${siteOrigin}${trPath}`;
+const enHref = `${siteOrigin}${enPath}`;
+
+// Default WebSite Schema.org JSON-LD
+const websiteSchema = {
+  '@context': 'https://schema.org',
+  '@type': 'WebSite',
+  name: 'Phoem',
+  url: siteOrigin,
+  description: defaultDescription,
+  inLanguage: ['tr', 'en'],
+};
+---
+
+<!doctype html>
+<html lang={lang}>
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+    <link rel="manifest" href="/site.webmanifest" />
+    <meta name="theme-color" content="#f59e0b" />
+    <meta name="generator" content={Astro.generator} />
+
+    <!-- Primary Meta Tags -->
+    <title>{title}</title>
+    <meta name="title" content={title} />
+    <meta name="description" content={description} />
+    <link rel="canonical" href={canonicalURL} />
+
+    <!-- Multilingual Alternates (hreflang) -->
+    <link rel="alternate" hreflang="tr" href={trHref} />
+    <link rel="alternate" hreflang="en" href={enHref} />
+    <link rel="alternate" hreflang="x-default" href={trHref} />
+
+    <!-- Open Graph / Facebook -->
+    <meta property="og:type" content="website" />
+    <meta property="og:url" content={canonicalURL} />
+    <meta property="og:site_name" content="Phoem" />
+    <meta property="og:title" content={title} />
+    <meta property="og:description" content={description} />
+    <meta property="og:image" content={absoluteImageUrl} />
+    <meta property="og:image:width" content="1200" />
+    <meta property="og:image:height" content="630" />
+
+    <!-- Twitter -->
+    <meta property="twitter:card" content="summary_large_image" />
+    <meta property="twitter:url" content={canonicalURL} />
+    <meta property="twitter:title" content={title} />
+    <meta property="twitter:description" content={description} />
+    <meta property="twitter:image" content={absoluteImageUrl} />
+
+    <!-- Structured Data (Schema.org JSON-LD) -->
+    <script
+      type="application/ld+json"
+      is:inline
+      set:html={JSON.stringify(
+        jsonLd ? [websiteSchema, jsonLd] : websiteSchema,
+      )}
+    />
+
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap"
+      rel="stylesheet"
+    />
+  </head>
+  <body
+    class="min-h-screen bg-zinc-50 text-zinc-900 font-sans antialiased selection:bg-amber-500/20 selection:text-amber-900"
+  >
+    <div class="relative flex min-h-screen flex-col">
+      <slot name="header" />
+      <main class="flex-1">
+        <slot />
+      </main>
+      <footer
+        class="border-t border-zinc-200 bg-white py-8 text-center text-xs text-zinc-500"
+      >
+        <div class="container mx-auto px-4 space-y-1.5">
+          <p class="font-medium text-zinc-700">
+            {
+              lang === 'en' ? (
+                <>
+                  Phoem &bull; A{' '}
+                  <a
+                    href="https://nostr.org.tr"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    class="text-amber-700 hover:text-amber-800 underline underline-offset-2 font-semibold"
+                  >
+                    nostr.org.tr
+                  </a>{' '}
+                  project &bull; Nostr &bull; Blossom Media
+                </>
+              ) : (
+                <>
+                  Phoem &bull; Bir{' '}
+                  <a
+                    href="https://nostr.org.tr"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    class="text-amber-700 hover:text-amber-800 underline underline-offset-2 font-semibold"
+                  >
+                    nostr.org.tr
+                  </a>{' '}
+                  projesidir &bull; Nostr &bull; Blossom Medya
+                </>
+              )
+            }
+          </p>
+          <p class="text-zinc-500">
+            {
+              lang === 'en'
+                ? 'Open-source, censorship-resistant and sovereign community photo album platform.'
+                : 'Açık kaynaklı, sansürsüz ve bağımsız topluluk fotoğraf albümü platformu.'
+            }
+          </p>
+        </div>
+      </footer>
+    </div>
+  </body>
+</html>
