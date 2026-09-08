@@ -115,9 +115,15 @@ describe('POST /api/cache/invalidate', () => {
     const coordinate = `31922:${authorKeypair.pubkey}:${slug}`;
     const slugUrl = `https://photo.emre.xyz/album/${slug}`;
 
-    // Prime the cache
+    // Prime the cache with both album and directory entries
+    const eventsUrl = 'https://photo.emre.xyz/events';
     await edgeCache.put(slugUrl, new Response('Cached Album', { status: 200 }));
+    await edgeCache.put(
+      eventsUrl,
+      new Response('Cached Events', { status: 200 }),
+    );
     expect(await edgeCache.match(slugUrl)).not.toBeNull();
+    expect(await edgeCache.match(eventsUrl)).not.toBeNull();
 
     const template = {
       kind: 27235,
@@ -149,7 +155,8 @@ describe('POST /api/cache/invalidate', () => {
     expect(data.success).toBe(true);
     expect(data.purgedCount).toBeGreaterThan(0);
 
-    // Verify cache entry is purged
+    // Verify both album and events directory cache entries are purged
     expect(await edgeCache.match(slugUrl)).toBeNull();
+    expect(await edgeCache.match(eventsUrl)).toBeNull();
   });
 });

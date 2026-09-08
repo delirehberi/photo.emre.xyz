@@ -1,0 +1,94 @@
+---
+import BaseLayout from '@/layouts/BaseLayout.astro';
+import Header from '@/components/Header.astro';
+import { DeleteRequestManager } from '@/components/policy/DeleteRequestManager';
+import {
+  getLocaleFromUrl,
+  getDictionary,
+  getLocalizedPath,
+} from '@/lib/i18n/context';
+import { ShieldAlert, BookOpen } from 'lucide-react';
+
+export const prerender = false;
+
+const locale = getLocaleFromUrl(Astro.url);
+const t = getDictionary(locale);
+
+const policyHref = getLocalizedPath('/policy', locale);
+
+// Server-side query parameter extraction
+const photoParam =
+  Astro.url.searchParams.get('photo') ||
+  Astro.url.searchParams.get('hash') ||
+  '';
+const pubkeyParam =
+  Astro.url.searchParams.get('pubkey') ||
+  Astro.url.searchParams.get('npub') ||
+  Astro.url.searchParams.get('author') ||
+  '';
+const albumParam =
+  Astro.url.searchParams.get('album') ||
+  Astro.url.searchParams.get('event') ||
+  '';
+const urlParam =
+  Astro.url.searchParams.get('url') ||
+  Astro.url.searchParams.get('image') ||
+  '';
+---
+
+<BaseLayout
+  title={locale === 'en'
+    ? 'Photo Removal Request — Phoem'
+    : 'Fotoğraf Kaldırma Talebi — Phoem'}
+  description={locale === 'en'
+    ? 'Exercise your likeness and privacy rights: locate photo uploaders on Nostr and request removal of event photographs.'
+    : 'Kişisel haklarınızı ve mahremiyetinizi koruyun: fotoğrafı yükleyen kişiye Nostr üzerinden ulaşarak kaldırma talebi iletin.'}
+  lang={locale}
+>
+  <Header slot="header" />
+
+  <main class="container mx-auto px-4 sm:px-6 py-12 sm:py-20 max-w-5xl">
+    <!-- Top Navigation Breadcrumb / Policy Link -->
+    <div class="mb-8 flex items-center justify-between">
+      <a
+        href={policyHref}
+        class="inline-flex items-center gap-1.5 text-xs font-semibold text-zinc-600 hover:text-zinc-900 transition"
+      >
+        <BookOpen className="h-3.5 w-3.5 text-amber-600" />
+        <span>{t.deleteRequest.readPolicyLink}</span>
+      </a>
+    </div>
+
+    <!-- Hero Header -->
+    <div class="text-center max-w-3xl mx-auto space-y-4 mb-12 sm:mb-16">
+      <div
+        class="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-amber-500/10 border border-amber-500/20 text-amber-700 text-xs font-semibold tracking-wide uppercase"
+      >
+        <ShieldAlert className="h-3.5 w-3.5 text-amber-600" />
+        <span>{t.deleteRequest.badge}</span>
+      </div>
+
+      <h1
+        class="text-3xl sm:text-5xl font-extrabold text-zinc-950 tracking-tight leading-tight text-balance"
+      >
+        {t.deleteRequest.title}
+      </h1>
+
+      <p
+        class="text-base sm:text-lg text-zinc-600 leading-relaxed max-w-2xl mx-auto"
+      >
+        {t.deleteRequest.subtitle}
+      </p>
+    </div>
+
+    <!-- Interactive Delete Request Manager Island -->
+    <DeleteRequestManager
+      client:load
+      initialLocale={locale}
+      initialPhotoHash={photoParam}
+      initialPubkey={pubkeyParam}
+      initialAlbum={albumParam}
+      initialUrl={urlParam}
+    />
+  </main>
+</BaseLayout>

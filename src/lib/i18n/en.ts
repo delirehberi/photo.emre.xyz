@@ -163,7 +163,7 @@ export const enDictionary: Dictionary = {
       'High-resolution photos signed and published directly by the event organizer.',
     communityDesc:
       'Moments captured and shared by attendees who participated in the event.',
-    downloadHighRes: 'Download in Full Resolution',
+    downloadHighRes: 'Download',
   },
   auth: {
     modalTitle: 'Connect with Nostr Account',
@@ -273,7 +273,9 @@ export const enDictionary: Dictionary = {
     of: 'of',
     communityBadge: 'Community Contribution',
     exifInfo: 'EXIF Info',
-    downloadWatermarked: 'Watermarked',
+    downloadWatermarked: 'Download',
+    downloadFullRes: 'Download',
+    download: 'Download',
     photographicMetadata: 'Photographic Metadata',
     caption: 'Caption',
     cameraOptics: 'Camera & Optics',
@@ -343,6 +345,8 @@ export const enDictionary: Dictionary = {
     tagline: 'Event Photo Album Platform • Nostr • Blossom Media',
     openSourceDesc:
       'Open-source, sovereign, and censorship-resistant community photo album platform.',
+    policy: 'Privacy & Photo Policy',
+    deleteRequest: 'Photo Removal Request',
   },
   common: {
     loading: 'Loading...',
@@ -363,5 +367,101 @@ export const enDictionary: Dictionary = {
       'Private Server: Restricted to authorized organizations and administrator keys.',
     primalNotice: 'High-speed public default Blossom CDN. Open to everyone.',
     freeBetaBadge: 'Beta: Free',
+  },
+  policy: {
+    title: 'Community Policy & Likeness Rights',
+    subtitle:
+      'Phoem is a sovereign event photography platform built on decentralized protocols (Nostr and Blossom). Our principles regarding personal privacy, likeness rights, and content removal are detailed below.',
+    badge: 'Transparency & Sovereignty',
+    sovereigntyTitle: '1. Decentralized & Sovereign Architecture',
+    sovereigntyDesc:
+      'Phoem maintains no centralized database or proprietary media cloud. Photo metadata exists as cryptographically signed events on Nostr relays. Media files are hosted on content-addressable (SHA-256) open Blossom servers.',
+    likenessRightsTitle: '2. Personal Likeness & Privacy Rights',
+    likenessRightsDesc:
+      'Every individual has an inalienable right over their own likeness and personal image (GDPR, KVKK, and universal rights of privacy). If you recognize yourself in an event photograph and wish to have it removed, your request is legitimate and honored as a top priority.',
+    photographerDutiesTitle: '3. Photographer & Organizer Responsibilities',
+    photographerDutiesDesc:
+      'All community members who create albums and upload photos to Phoem pledge to respect attendee consent, never publish invasive or sensitive moments, and promptly honor legitimate takedown requests.',
+    technicalDeletionTitle: '4. How Technical Deletion Works',
+    technicalDeletionDesc:
+      'Unlike walled gardens, deletion across sovereign decentralized networks operates through coordinated protocol layers:',
+    blossomMechanism:
+      'Blossom Server Deletion (BUD-01 / BUD-02): The uploader signs a Kind 24242 delete authorization via NIP-98 to permanently delete the image blob from their Blossom server.',
+    nostrMechanism:
+      'Nostr Event Deletion (NIP-09): The photographer or album curator publishes a Kind 5 (deletion) event or updates the album event to retract the photo reference from relays.',
+    resolutionStepsTitle: '5. Steps to Request Photo Removal',
+    step1Title: 'Step 1: Contact the Photo Uploader (Direct)',
+    step1Desc:
+      'Every photograph cryptographically identifies its provider (pubkey / npub). Using our "Photo Removal Request" tool, you can reach the photographer directly via Nostr encrypted DM or open web clients (Primal, njump, Coracle).',
+    step2Title: 'Step 2: Reach Out to the Event Organizer',
+    step2Desc:
+      'If the photographer does not respond, the event organizer who curates the album can update the event to remove the image from the public gallery.',
+    step3Title: 'Step 3: Blossom Host & Platform Moderation',
+    step3Desc:
+      'If content remains disputed, you may file an abuse/takedown notice with the Blossom server host, or report it to Phoem maintainers for client-level filtering.',
+    ctaTitle: 'Did you spot yourself in a photo?',
+    ctaDesc:
+      'Use the SHA-256 hash code and the uploader’s Nostr identity to generate a direct removal request.',
+    ctaBtn: 'Open Removal Request Tool',
+  },
+  deleteRequest: {
+    title: 'Photo Removal Request',
+    subtitle:
+      'If you see a photograph of yourself in an event album and want it removed, use this tool to locate the uploader on Nostr, generate a formal removal request, or report the content.',
+    badge: 'Likeness & Privacy Rights',
+    introAlert:
+      'Phoem is an open protocol; photos are hosted on photographers’ Blossom servers. This tool gathers the cryptographic identifiers needed so you can reach the uploader directly on Nostr with a ready-to-send message.',
+    formTitle: 'Photo & Uploader Identifiers',
+    photoHashLabel: 'Photo SHA-256 Hash Code',
+    photoHashPlaceholder: 'e.g. a3f5b8c... (64-character hex hash)',
+    photoUrlLabel: 'Photo / Image URL',
+    photoUrlPlaceholder: 'https://cdn.example.com/sha256...',
+    uploaderLabel: 'Photo Uploader (Nostr Pubkey or npub)',
+    uploaderPlaceholder: 'npub1... or 64-character hex pubkey',
+    albumLabel: 'Event / Album Coordinate',
+    albumPlaceholder: 'Event name or naddr...',
+    reasonLabel: 'Reason for Removal Request',
+    reasonLikeness:
+      'I appear in this photo and do not consent to its publication',
+    reasonCopyright: 'I hold copyright / photo taken without permission',
+    reasonPrivacy: 'Personal privacy or sensitive depiction',
+    reasonOther: 'Other / Requires explanation',
+    additionalDetailsLabel: 'Additional Notes (Optional)',
+    additionalDetailsPlaceholder:
+      'Any additional context you would like to include for the photographer...',
+    contactUploaderTitle: 'Reach Out to the Uploader',
+    contactUploaderDesc:
+      'Only the uploader can cryptographically delete the media blob from their Blossom server. Contact them directly through any of these Nostr avenues:',
+    openInPrimal: 'Open in Primal & Send DM',
+    openInNjump: 'View Profile on njump',
+    openInCoracle: 'Open in Coracle',
+    openInNostrApp: 'Open in Native Nostr App (nostr:)',
+    copyMessageBtn: 'Copy Request Message',
+    messageCopied: 'Request message copied to clipboard!',
+    messageTemplateLabel: 'Pre-Composed Removal Message for Uploader',
+    sendDirectDm: 'Send Direct Nostr DM',
+    dmSentSuccess: 'Message successfully sent over Nostr relays!',
+    fallbackTitle: 'What if the Uploader Does Not Respond?',
+    fallbackDesc:
+      'If the photographer does not respond within a reasonable timeframe, you can proceed with these escalations:',
+    blossomTakedownTitle: '1. Blossom Server Abuse Notice',
+    blossomTakedownDesc:
+      'Contact the Blossom media host hosting the photo (often abuse@ or via their website) specifying the SHA-256 hash to request server-level blob deletion.',
+    escalateToPlatform:
+      '2. Phoem Client Blocklist: Contact us at nostr@photo.emre.xyz or our NIP-05 address with the photo hash to filter the media from the Phoem web client.',
+    emptyUploaderNotice:
+      'Please enter the photo SHA-256 hash or the uploader Nostr pubkey in the form above.',
+    invalidHashNotice: 'Invalid SHA-256 hash code.',
+    resolvedNpub: 'Resolved Nostr Address',
+    copyNpub: 'Copy npub',
+    copiedNpub: 'Copied',
+    readPolicyLink: 'Review our Privacy & Photo Policy',
+    howItWorksTitle: 'How Content Removal Works',
+    step1Guide:
+      '1. Retrieve the SHA-256 hash from the photo details or Lightbox information panel.',
+    step2Guide:
+      '2. Open the uploader’s profile on Primal, Coracle, or your Nostr client with our pre-composed note.',
+    step3Guide:
+      '3. The uploader signs a Kind 24242 deletion event to permanently purge the file from Blossom.',
   },
 };

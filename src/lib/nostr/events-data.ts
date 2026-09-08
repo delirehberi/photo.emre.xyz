@@ -69,71 +69,87 @@ export async function fetchEventAlbums(): Promise<EventWithOrg[]> {
     return timeB - timeA;
   });
 
-  // Batch query Kind 1063 photos referencing these coordinates
+  // Parallel batch queries for photos and author profiles
   const coordinates = result.map((item) => item.album.coordinate);
-  if (coordinates.length > 0) {
-    try {
-      const pool = getSharedRelayPool();
-      const photoEvents = await pool.queryEvents(
-        DEFAULT_RELAYS,
-        {
-          kinds: [NOSTR_KINDS.PHOTO_METADATA],
-          '#a': coordinates,
-        },
-        { timeoutMs: 3000 },
-      );
-
-      const countMap = new Map<string, number>();
-      for (const pe of photoEvents) {
-        for (const tag of pe.tags) {
-          if (Array.isArray(tag) && tag[0] === 'a' && tag[1]) {
-            countMap.set(tag[1], (countMap.get(tag[1]) || 0) + 1);
-          }
-        }
-      }
-
-      for (const item of result) {
-        item.photoCount = countMap.get(item.album.coordinate) || 0;
-      }
-    } catch (err) {
-      console.warn('Could not query photo counts for albums:', err);
-    }
-  }
-
-  // Batch query Kind 0 profiles for author pubkeys
   const authorPubkeys = Array.from(
     new Set(result.map((item) => item.album.pubkey)),
   );
-  if (authorPubkeys.length > 0) {
-    try {
-      const pool = getSharedRelayPool();
-      const profileEvents = await pool.queryEvents(
-        DEFAULT_RELAYS,
-        {
-          kinds: [NOSTR_KINDS.METADATA],
-          authors: authorPubkeys,
-        },
-        { timeoutMs: 3000 },
-      );
 
-      const profileMap = new Map<string, OrganizationProfile>();
-      for (const pe of profileEvents) {
-        try {
-          const profile = parseProfileEvent(pe);
-          const existing = profileMap.get(profile.pubkey);
-          if (!existing || profile.createdAt > existing.createdAt) {
-            profileMap.set(profile.pubkey, profile);
-          }
-        } catch {
-          // Skip invalid profile events
+  const pool = getSharedRelayPool();
+
+  const photoPromise =
+    coordinates.length > 0
+      ? pool
+          .queryEvents(
+            DEFAULT_RELAYS,
+            {
+              kinds: [NOSTR_KINDS.PHOTO_METADATA],
+              '#a': coordinates,
+            },
+            { timeoutMs: 2500 },
+          )
+          .catch((err) => {
+            console.warn('Could not query photo counts for albums:', err);
+            return [];
+          })
+      : Promise.resolve([]);
+
+  const profilePromise =
+    authorPubkeys.length > 0
+      ? pool
+          .queryEvents(
+            DEFAULT_RELAYS,
+            {
+              kinds: [NOSTR_KINDS.METADATA],
+              authors: authorPubkeys,
+            },
+            { timeoutMs: 2500 },
+          )
+          .catch((err) => {
+            console.warn('Could not query author profiles from relay:', err);
+            return [];
+          })
+      : Promise.resolve([]);
+
+  const [photoSettled, profileSettled] = await Promise.allSettled([
+    photoPromise,
+    profilePromise,
+  ]);
+
+  if (photoSettled.status === 'fulfilled' && photoSettled.value.length > 0) {
+    const countMap = new Map<string, number>();
+    for (const pe of photoSettled.value) {
+      for (const tag of pe.tags) {
+        if (Array.isArray(tag) && tag[0] === 'a' && tag[1]) {
+          countMap.set(tag[1], (countMap.get(tag[1]) || 0) + 1);
         }
       }
+    }
 
-      for (const item of result) {
-        item.org = profileMap.get(item.album.pubkey) || null;
+    for (const item of result) {
+      item.photoCount = countMap.get(item.album.coordinate) || 0;
+    }
+  }
+
+  if (
+    profileSettled.status === 'fulfilled' &&
+    profileSettled.value.length > 0
+  ) {
+    const profileMap = new Map<string, OrganizationProfile>();
+    for (const pe of profileSettled.value) {
+      try {
+        const profile = parseProfileEvent(pe);
+        const existing = profileMap.get(profile.pubkey);
+        if (!existing || profile.createdAt > existing.createdAt) {
+          profileMap.set(profile.pubkey, profile);
+        }
+      } catch {
+        // Skip invalid profile events
       }
-    } catch (err) {
-      console.warn('Could not query author profiles from relay:', err);
+    }
+
+    for (const item of result) {
+      item.org = profileMap.get(item.album.pubkey) || null;
     }
   }
 

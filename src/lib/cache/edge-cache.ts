@@ -139,6 +139,17 @@ export class EdgeCacheManager {
       return;
     }
 
+    // Never cache responses marked private, no-store, or no-cache
+    const existingCacheControl = response.headers.get('Cache-Control');
+    if (
+      existingCacheControl &&
+      (existingCacheControl.includes('no-store') ||
+        existingCacheControl.includes('no-cache') ||
+        existingCacheControl.includes('private'))
+    ) {
+      return;
+    }
+
     const sMaxAge = options.sMaxAge ?? DEFAULT_CACHE_CONFIG.S_MAX_AGE;
     const swr =
       options.staleWhileRevalidate ??
@@ -238,7 +249,8 @@ export class EdgeCacheManager {
   }
 
   /**
-   * Invalidates all edge cache entries associated with an album coordinate or slug.
+   * Invalidates all edge cache entries associated with an album coordinate or slug,
+   * including album detail pages and directory/listing views.
    */
   public async invalidateCoordinate(
     coordinateOrSlug: string,
@@ -246,13 +258,21 @@ export class EdgeCacheManager {
   ): Promise<string[]> {
     const purgedUrls: string[] = [];
 
-    const pathsToPurge: string[] = [`/album/${coordinateOrSlug}`];
+    const pathsToPurge: string[] = [
+      `/album/${coordinateOrSlug}`,
+      `/en/album/${coordinateOrSlug}`,
+      '/',
+      '/en',
+      '/events',
+      '/en/events',
+    ];
 
     if (coordinateOrSlug.includes(':')) {
       const parts = coordinateOrSlug.split(':');
       const dTag = parts[parts.length - 1];
       if (dTag) {
         pathsToPurge.push(`/album/${dTag}`);
+        pathsToPurge.push(`/en/album/${dTag}`);
       }
     }
 

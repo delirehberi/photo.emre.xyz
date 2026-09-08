@@ -55,14 +55,13 @@ export function isCacheableRoute(pathname: string, method: string): boolean {
     return false;
   }
 
-  // Cacheable public SSR routes and media download endpoints
+  // Cacheable public SSR routes
   return (
     path === '/' ||
     path === '/events' ||
     path === '/about' ||
     path === '/contact' ||
     path.startsWith('/album') ||
-    path.startsWith('/org') ||
-    path.startsWith('/api/download')
+    path.startsWith('/org')
   );
 }

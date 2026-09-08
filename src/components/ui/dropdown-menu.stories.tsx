@@ -32,7 +32,7 @@ export const Default: Story = {
         <DropdownMenuSeparator />
         <DropdownMenuItem>
           <Download className="mr-2 h-4 w-4" />
-          Download Watermarked
+          Download
         </DropdownMenuItem>
         <DropdownMenuItem>
           <Share2 className="mr-2 h-4 w-4" />

@@ -146,4 +146,69 @@ describe('RelayPoolManager', () => {
     const single = await manager.queryOne([], { kinds: [1] });
     expect(single).toBeNull();
   });
+
+  it('uses subscribeEose to progressively collect events and returns events even on timeout', async () => {
+    const event1 = finalizeEvent(
+      {
+        kind: 31922,
+        created_at: 1000,
+        tags: [['d', 'event-1']],
+        content: '',
+      },
+      secretKey,
+    );
+
+    const mockCloser = { close: vi.fn() };
+    const poolWithSubscribeEose = {
+      ...mockSimplePool,
+      subscribeEose: vi.fn().mockImplementation((_relays, _filter, params) => {
+        // Relay 1 delivers event immediately
+        params.onevent(event1);
+        // But onclose is never called before timeout (simulating a slow hanging remote relay)
+        return mockCloser;
+      }),
+    } as unknown as SimplePool;
+
+    const manager = new RelayPoolManager(poolWithSubscribeEose);
+    const results = await manager.queryEvents(
+      ['wss://relay.emre.xyz', 'wss://slow-relay.com'],
+      { kinds: [31922] },
+      { timeoutMs: 50 },
+    );
+
+    // Events delivered by fast relay are retained rather than discarded!
+    expect(results).toHaveLength(1);
+    expect(results[0]?.id).toBe(event1.id);
+    expect(mockCloser.close).toHaveBeenCalled();
+  });
+
+  it('uses subscribe in queryOne to resolve first matching event immediately and close subscription', async () => {
+    const event = finalizeEvent(
+      {
+        kind: 0,
+        created_at: 1000,
+        tags: [],
+        content: JSON.stringify({ name: 'emre' }),
+      },
+      secretKey,
+    );
+
+    const mockCloser = { close: vi.fn() };
+    const poolWithSubscribe = {
+      ...mockSimplePool,
+      subscribe: vi.fn().mockImplementation((_relays, _filter, params) => {
+        params.onevent(event);
+        return mockCloser;
+      }),
+    } as unknown as SimplePool;
+
+    const manager = new RelayPoolManager(poolWithSubscribe);
+    const result = await manager.queryOne(['wss://relay.emre.xyz'], {
+      kinds: [0],
+    });
+
+    expect(result).not.toBeNull();
+    expect(result?.id).toBe(event.id);
+    expect(mockCloser.close).toHaveBeenCalled();
+  });
 });

@@ -417,19 +417,6 @@ export function EventAlbumCreator() {
 
         setPublishedPhotos(uploadedList);
 
-        // Invalidate edge cache for the new album
-        if (typeof window !== 'undefined') {
-          try {
-            fetch('/api/cache/invalidate', {
-              method: 'POST',
-              headers: { 'Content-Type': 'application/json' },
-              body: JSON.stringify({ coordinate: albumCoordinate }),
-            }).catch(() => {});
-          } catch {
-            // Ignore background error
-          }
-        }
-
         // Handle success vs partial/full failure
         if (failedPhotosCount > 0) {
           setErrorMessage(
@@ -448,6 +435,43 @@ export function EventAlbumCreator() {
           window.scrollTo({ top: 0, behavior: 'smooth' });
         }
         setRedirectCountdown(4);
+      }
+
+      // Invalidate edge cache for the new album and all listing directories
+      const albumCoordinate = `31922:${signedEvent.pubkey}:${effectiveDTag}`;
+      if (typeof window !== 'undefined') {
+        try {
+          const authTemplate = {
+            kind: 27235,
+            created_at: Math.floor(Date.now() / 1000),
+            tags: [
+              ['u', `${window.location.origin}/api/cache/invalidate`],
+              ['method', 'POST'],
+            ],
+            content: 'Invalidate edge cache for new event album',
+          };
+          const authEvent = await signer.signEvent(authTemplate);
+
+          fetch('/api/cache/invalidate', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              coordinate: albumCoordinate,
+              paths: ['/', '/en', '/events', '/en/events'],
+              authEvent,
+            }),
+          }).catch((invalErr) => {
+            console.warn(
+              'Edge cache invalidation background warning:',
+              invalErr,
+            );
+          });
+        } catch (invalErr) {
+          console.warn(
+            'Failed to sign edge cache invalidation auth event:',
+            invalErr,
+          );
+        }
       }
     } catch (err: unknown) {
       const msg = err instanceof Error ? err.message : String(err);

@@ -3,9 +3,10 @@
  * photo.emre.xyz
  */
 
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useEffect, useCallback } from 'react';
 import {
   formatEventDateTime,
+  fetchEventAlbums,
   type EventWithOrg,
 } from '@/lib/nostr/events-data';
 import { I18nProvider, useI18n, getLocalizedPath } from '@/lib/i18n/context';
@@ -20,6 +21,7 @@ import {
   ArrowRight,
   ShieldCheck,
   Building2,
+  RefreshCw,
 } from 'lucide-react';
 import { getThumbnailUrl } from '@/lib/media';
 
@@ -34,8 +36,36 @@ function EventsGridContent({
   initialEvents: EventWithOrg[];
 }) {
   const { t, locale } = useI18n();
+  const [events, setEvents] = useState<EventWithOrg[]>(initialEvents);
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedTag, setSelectedTag] = useState<string>('all');
+  const [isRefreshing, setIsRefreshing] = useState(false);
+
+  const handleRefresh = useCallback(async () => {
+    setIsRefreshing(true);
+    try {
+      const liveEvents = await fetchEventAlbums();
+      if (liveEvents && liveEvents.length > 0) {
+        setEvents(liveEvents);
+      }
+    } catch (err) {
+      console.warn('Client relay refresh error:', err);
+    } finally {
+      setIsRefreshing(false);
+    }
+  }, []);
+
+  // Sync state if props change
+  useEffect(() => {
+    setEvents(initialEvents);
+  }, [initialEvents]);
+
+  // Client-side fallback: if initial SSR events were empty, attempt client relay query
+  useEffect(() => {
+    if (initialEvents.length === 0) {
+      handleRefresh();
+    }
+  }, [initialEvents.length, handleRefresh]);
 
   // Dynamically collect unique event tags across all albums (excluding internal tags)
   const dynamicTags = useMemo(() => {
@@ -52,7 +82,7 @@ function EventsGridContent({
     ]);
     const gathered = new Set<string>();
 
-    for (const item of initialEvents) {
+    for (const item of events) {
       for (const tag of item.album.tags) {
         const clean = tag.trim().toLowerCase();
         if (clean && !coreCategoryTags.has(clean)) {
@@ -62,7 +92,7 @@ function EventsGridContent({
     }
 
     return Array.from(gathered).sort();
-  }, [initialEvents]);
+  }, [events]);
 
   // Core categories + dynamic event tags
   const filterButtons = useMemo(() => {
@@ -84,7 +114,7 @@ function EventsGridContent({
   }, [t, dynamicTags]);
 
   const filteredEvents = useMemo(() => {
-    return initialEvents.filter((item) => {
+    return events.filter((item) => {
       const q = searchQuery.toLowerCase().trim();
       const matchesSearch =
         !q ||
@@ -127,10 +157,10 @@ function EventsGridContent({
 
       return matchesSearch && matchesTag;
     });
-  }, [initialEvents, searchQuery, selectedTag]);
+  }, [events, searchQuery, selectedTag]);
 
   // Zero state when no event albums are published on the Nostr network yet
-  if (initialEvents.length === 0) {
+  if (events.length === 0) {
     return (
       <div className="flex flex-col items-center justify-center py-16 px-6 text-center rounded-3xl border border-dashed border-zinc-200 bg-white shadow-xs">
         <div className="flex h-14 w-14 items-center justify-center rounded-2xl bg-amber-50 text-amber-600 mb-5 shadow-xs">
@@ -142,17 +172,40 @@ function EventsGridContent({
         <p className="text-sm text-zinc-500 max-w-md mt-2 mb-6 leading-relaxed">
           {t.events.noEventsDesc}
         </p>
-        <Button
-          variant="default"
-          size="default"
-          asChild
-          className="gap-2 shadow-xs"
-        >
-          <a href="/events/create">
-            <span>{t.events.createEventCta}</span>
-            <ArrowRight className="h-4 w-4" />
-          </a>
-        </Button>
+        <div className="flex flex-wrap items-center justify-center gap-3">
+          <Button
+            variant="default"
+            size="default"
+            asChild
+            className="gap-2 shadow-xs"
+          >
+            <a href="/events/create">
+              <span>{t.events.createEventCta}</span>
+              <ArrowRight className="h-4 w-4" />
+            </a>
+          </Button>
+
+          <Button
+            variant="outline"
+            size="default"
+            onClick={handleRefresh}
+            disabled={isRefreshing}
+            className="gap-2 border-zinc-200"
+          >
+            <RefreshCw
+              className={`h-4 w-4 ${isRefreshing ? 'animate-spin text-amber-600' : ''}`}
+            />
+            <span>
+              {isRefreshing
+                ? locale === 'en'
+                  ? 'Checking relays...'
+                  : 'Röleler taranıyor...'
+                : locale === 'en'
+                  ? 'Refresh Relays'
+                  : 'Yenile'}
+            </span>
+          </Button>
+        </div>
       </div>
     );
   }
@@ -192,17 +245,36 @@ function EventsGridContent({
           </div>
         </div>
 
-        <Button
-          variant="default"
-          size="sm"
-          asChild
-          className="h-9 gap-1.5 text-xs font-semibold shrink-0 shadow-xs"
-        >
-          <a href="/events/create">
-            <Calendar className="h-3.5 w-3.5 text-amber-400" />
-            <span>{t.events.createEventCta}</span>
-          </a>
-        </Button>
+        <div className="flex items-center gap-2 shrink-0">
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={handleRefresh}
+            disabled={isRefreshing}
+            className="h-9 px-2.5 text-xs text-zinc-600 border-zinc-200 hover:bg-zinc-100 hover:text-zinc-900 shadow-xs cursor-pointer"
+            title={
+              locale === 'en'
+                ? 'Refresh events from relays'
+                : 'Rölelerden güncel etkinlikleri çek'
+            }
+          >
+            <RefreshCw
+              className={`h-3.5 w-3.5 ${isRefreshing ? 'animate-spin text-amber-600' : ''}`}
+            />
+          </Button>
+
+          <Button
+            variant="default"
+            size="sm"
+            asChild
+            className="h-9 gap-1.5 text-xs font-semibold shadow-xs"
+          >
+            <a href="/events/create">
+              <Calendar className="h-3.5 w-3.5 text-amber-400" />
+              <span>{t.events.createEventCta}</span>
+            </a>
+          </Button>
+        </div>
       </div>
 
       {/* Events Grid */}

@@ -46,43 +46,83 @@ export class RelayPoolManager {
       return [];
     }
 
-    try {
-      const queryPromise = this.pool.querySync(relayUrls, filter);
-      const timeoutPromise = new Promise<NostrEvent[]>((resolve) => {
-        const timer = setTimeout(() => {
-          clearTimeout(timer);
-          resolve([]);
-        }, timeoutMs);
-      });
-
-      // Race between the relay query and timeout cutoff
-      const rawEvents = await Promise.race([queryPromise, timeoutPromise]);
-
-      // Deduplicate by event ID and optionally verify signatures
+    return new Promise<NostrEvent[]>((resolve) => {
       const eventMap = new Map<string, NostrEvent>();
+      let isSettled = false;
+      let closer: { close: (reason?: string) => void } | undefined;
 
-      for (const event of rawEvents) {
-        if (!event || !event.id) continue;
-        if (eventMap.has(event.id)) continue;
-
-        if (verifySignatures) {
-          try {
-            if (!verifyEvent(event)) {
-              continue;
+      const cleanupAndResolve = () => {
+        if (isSettled) return;
+        isSettled = true;
+        clearTimeout(timer);
+        const closeSub = () => {
+          if (closer) {
+            try {
+              closer.close('query completed or timed out');
+            } catch {
+              // Ignore close error
             }
-          } catch {
-            continue;
           }
+        };
+        if (closer) {
+          closeSub();
+        } else {
+          queueMicrotask(closeSub);
         }
+        resolve(Array.from(eventMap.values()));
+      };
 
-        eventMap.set(event.id, event);
+      const timer = setTimeout(() => {
+        cleanupAndResolve();
+      }, timeoutMs);
+
+      try {
+        if (typeof this.pool.subscribeEose === 'function') {
+          closer = this.pool.subscribeEose(relayUrls, filter, {
+            onevent: (event: NostrEvent) => {
+              if (!event || !event.id) return;
+              if (eventMap.has(event.id)) return;
+
+              if (verifySignatures) {
+                try {
+                  if (!verifyEvent(event)) {
+                    return;
+                  }
+                } catch {
+                  return;
+                }
+              }
+
+              eventMap.set(event.id, event);
+            },
+            onclose: () => {
+              cleanupAndResolve();
+            },
+          });
+        } else {
+          // Fallback for custom or mock pool implementations
+          this.pool
+            .querySync(relayUrls, filter)
+            .then((rawEvents) => {
+              for (const event of rawEvents) {
+                if (!event || !event.id || eventMap.has(event.id)) continue;
+                if (verifySignatures) {
+                  try {
+                    if (!verifyEvent(event)) continue;
+                  } catch {
+                    continue;
+                  }
+                }
+                eventMap.set(event.id, event);
+              }
+              cleanupAndResolve();
+            })
+            .catch(() => cleanupAndResolve());
+        }
+      } catch {
+        cleanupAndResolve();
       }
-
-      return Array.from(eventMap.values());
-    } catch {
-      // Gracefully return empty array on catastrophic network or pool failure
-      return [];
-    }
+    });
   }
 
   /**
@@ -107,34 +147,71 @@ export class RelayPoolManager {
       return null;
     }
 
-    try {
-      const getPromise = this.pool.get(relayUrls, filter);
-      const timeoutPromise = new Promise<null>((resolve) => {
-        const timer = setTimeout(() => {
-          clearTimeout(timer);
-          resolve(null);
-        }, timeoutMs);
-      });
+    return new Promise<NostrEvent | null>((resolve) => {
+      let isSettled = false;
+      let closer: { close: (reason?: string) => void } | undefined;
 
-      const event = await Promise.race([getPromise, timeoutPromise]);
-      if (!event) {
-        return null;
-      }
-
-      if (verifySignatures) {
-        try {
-          if (!verifyEvent(event)) {
-            return null;
+      const cleanupAndResolve = (ev: NostrEvent | null) => {
+        if (isSettled) return;
+        isSettled = true;
+        clearTimeout(timer);
+        const closeSub = () => {
+          if (closer) {
+            try {
+              closer.close('queryOne completed or timed out');
+            } catch {
+              // Ignore close error
+            }
           }
-        } catch {
-          return null;
+        };
+        if (closer) {
+          closeSub();
+        } else {
+          queueMicrotask(closeSub);
         }
-      }
+        resolve(ev);
+      };
 
-      return event;
-    } catch {
-      return null;
-    }
+      const timer = setTimeout(() => {
+        cleanupAndResolve(null);
+      }, timeoutMs);
+
+      try {
+        if (typeof this.pool.subscribe === 'function') {
+          closer = this.pool.subscribe(relayUrls, filter, {
+            onevent: (event: NostrEvent) => {
+              if (!event || !event.id) return;
+              if (verifySignatures) {
+                try {
+                  if (!verifyEvent(event)) return;
+                } catch {
+                  return;
+                }
+              }
+              cleanupAndResolve(event);
+            },
+            oneose: () => cleanupAndResolve(null),
+            onclose: () => cleanupAndResolve(null),
+          });
+        } else if (typeof this.pool.get === 'function') {
+          // Fallback for custom or mock pool implementations
+          this.pool
+            .get(relayUrls, filter)
+            .then((ev) => {
+              if (ev && (!verifySignatures || verifyEvent(ev))) {
+                cleanupAndResolve(ev);
+              } else {
+                cleanupAndResolve(null);
+              }
+            })
+            .catch(() => cleanupAndResolve(null));
+        } else {
+          cleanupAndResolve(null);
+        }
+      } catch {
+        cleanupAndResolve(null);
+      }
+    });
   }
 
   /**

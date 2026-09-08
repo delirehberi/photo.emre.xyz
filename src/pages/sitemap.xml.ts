@@ -111,6 +111,48 @@ export const GET: APIRoute = async ({ site, url }) => {
       changefreq: 'monthly',
       priority: '0.6',
     },
+    // Policy
+    {
+      loc: `${origin}/policy`,
+      alternates: [
+        { lang: 'tr', href: `${origin}/policy` },
+        { lang: 'en', href: `${origin}/en/policy` },
+        { lang: 'x-default', href: `${origin}/policy` },
+      ],
+      changefreq: 'monthly',
+      priority: '0.6',
+    },
+    {
+      loc: `${origin}/en/policy`,
+      alternates: [
+        { lang: 'tr', href: `${origin}/policy` },
+        { lang: 'en', href: `${origin}/en/policy` },
+        { lang: 'x-default', href: `${origin}/policy` },
+      ],
+      changefreq: 'monthly',
+      priority: '0.6',
+    },
+    // Delete Request
+    {
+      loc: `${origin}/delete-request`,
+      alternates: [
+        { lang: 'tr', href: `${origin}/delete-request` },
+        { lang: 'en', href: `${origin}/en/delete-request` },
+        { lang: 'x-default', href: `${origin}/delete-request` },
+      ],
+      changefreq: 'monthly',
+      priority: '0.6',
+    },
+    {
+      loc: `${origin}/en/delete-request`,
+      alternates: [
+        { lang: 'tr', href: `${origin}/delete-request` },
+        { lang: 'en', href: `${origin}/en/delete-request` },
+        { lang: 'x-default', href: `${origin}/delete-request` },
+      ],
+      changefreq: 'monthly',
+      priority: '0.6',
+    },
   ];
 
   // Dynamically index public Nostr event albums

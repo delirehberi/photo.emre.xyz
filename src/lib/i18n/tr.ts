@@ -163,7 +163,7 @@ export const trDictionary: Dictionary = {
       'Etkinlik organizatörü tarafından doğrudan imzalanıp yayınlanan yüksek çözünürlüklü fotoğraflar.',
     communityDesc:
       'Etkinliğe katılan topluluk üyeleri tarafından paylaşılan kareler.',
-    downloadHighRes: 'Yüksek Çözünürlükte İndir',
+    downloadHighRes: 'İndir',
   },
   auth: {
     modalTitle: 'Nostr Hesabı ile Bağlan',
@@ -274,7 +274,9 @@ export const trDictionary: Dictionary = {
     of: '/',
     communityBadge: 'Topluluk Katkısı',
     exifInfo: 'EXIF Bilgisi',
-    downloadWatermarked: 'Filigranlı İndir',
+    downloadWatermarked: 'İndir',
+    downloadFullRes: 'İndir',
+    download: 'İndir',
     photographicMetadata: 'Fotoğrafik Meta Veriler',
     caption: 'Açıklama / Başlık',
     cameraOptics: 'Kamera ve Optik',
@@ -345,6 +347,8 @@ export const trDictionary: Dictionary = {
     tagline: 'Etkinlik Fotoğraf Albümü Platformu • Nostr • Blossom Medya',
     openSourceDesc:
       'Açık kaynaklı, sansürsüz ve bağımsız topluluk fotoğraf albümü platformu.',
+    policy: 'Gizlilik ve Fotoğraf Politikası',
+    deleteRequest: 'Fotoğraf Kaldırma Talebi',
   },
   common: {
     loading: 'Yükleniyor...',
@@ -366,5 +370,100 @@ export const trDictionary: Dictionary = {
     primalNotice:
       'Hızlı genel erişimli varsayılan Blossom CDN. Herkese açıktır.',
     freeBetaBadge: 'Beta: Ücretsiz',
+  },
+  policy: {
+    title: 'Topluluk Politikası ve Kişisel Haklar',
+    subtitle:
+      'Phoem, açık protokoller (Nostr ve Blossom) üzerinde çalışan egemen bir etkinlik fotoğrafı platformudur. Kişisel mahremiyet, görüntü hakkı ve içerik kaldırma ilkelerimiz aşağıda detaylandırılmıştır.',
+    badge: 'Şeffaflık & Egemenlik',
+    sovereigntyTitle: '1. Dağıtık ve Egemen Mimari',
+    sovereigntyDesc:
+      'Phoem merkezi bir veritabanı veya kapalı bir bulut deposu barındırmaz. Fotoğraf meta verileri Nostr rölelerinde kriptografik olarak imzalanmış etkinlikler olarak yaşar. Görseller ise içerik adreslenebilir (SHA-256) açık Blossom sunucularında tutulur.',
+    likenessRightsTitle: '2. Kişisel Görüntü Hakkı ve Mahremiyet',
+    likenessRightsDesc:
+      'Her birey kendi yüz ve beden görüntüsü üzerinde vazgeçilmez bir hakka sahiptir (KVKK, GDPR ve evrensel kişilik hakları). Bir etkinlik albümünde yer alan herhangi bir fotoğrafta kendinizi görmeniz ve kaldırılmasını istemeniz durumunda, bu talebiniz meşru ve önceliklidir.',
+    photographerDutiesTitle: '3. Fotoğrafçı ve Organizatör Yükümlülükleri',
+    photographerDutiesDesc:
+      'Phoem üzerinde albüm oluşturan ve fotoğraf yükleyen tüm topluluk üyeleri; etkinlik katılımcılarının rızasına saygı göstermeyi, mahremiyeti ihlal edici veya hassas anları paylaşmamayı ve gelen kaldırma taleplerini ivedilikle yerine getirmeyi taahhüt eder.',
+    technicalDeletionTitle: '4. Teknik Olarak Silme Nasıl Çalışır?',
+    technicalDeletionDesc:
+      'Merkezi platformların aksine dağıtık ağlarda silme işlemi şu katmanlarda gerçekleşir:',
+    blossomMechanism:
+      'Blossom Sunucusundan Silme (BUD-01 / BUD-02): Fotoğrafı yükleyen kişi, NIP-98 imzalı Kind 24242 delete yetkilendirmesi ile görseli Blossom sunucusundan kalıcı olarak silebilir.',
+    nostrMechanism:
+      'Nostr Etkinlik Silme (NIP-09): Fotoğrafçı veya albüm küratörü, Nostr üzerinde Kind 5 (deletion) etkinliği yayınlayarak veya albüm listesini güncelleyerek fotoğraf referansını kaldırır.',
+    resolutionStepsTitle: '5. Bir Fotoğrafın Kaldırılması İçin Adımlar',
+    step1Title: '1. Adım: Fotoğrafı Yükleyen Kişiye Ulaşın (Doğrudan)',
+    step1Desc:
+      'Her fotoğrafın sağlayıcısı (pubkey / npub) kriptografik olarak bellidir. "Fotoğraf Kaldırma Talebi" sayfamızı kullanarak fotoğrafçıya Nostr üzerinden anında şifreli mesaj (DM) veya açık istemciler (Primal, njump, Coracle) üzerinden ulaşabilirsiniz.',
+    step2Title: '2. Adım: Organizatör ile İletişime Geçin',
+    step2Desc:
+      'Fotoğrafçıya ulaşılamaması durumunda, albümün sahibi olan organizatör etkinliği güncelleyerek ilgili kareyi albümden çıkarabilir.',
+    step3Title: '3. Adım: Blossom ve Platform Moderasyonuna Bildirin',
+    step3Desc:
+      'İçerik sahibinin yanıtsız kaldığı durumlarda görselin barındırıldığı Blossom sunucusuna bildirimde bulunabilir veya Phoem istemci düzeyinde engellenmesi için bize ulaşabilirsiniz.',
+    ctaTitle: 'Kendinize ait bir fotoğraf mı gördünüz?',
+    ctaDesc:
+      'Fotoğrafın hash bilgisi ve yükleyen kişinin Nostr adresiyle doğrudan kaldırma talebi oluşturun.',
+    ctaBtn: 'Kaldırma Talebi Oluştur',
+  },
+  deleteRequest: {
+    title: 'Fotoğraf Kaldırma Talebi',
+    subtitle:
+      'Bir etkinlik albümünde kendinize ait bir fotoğraf gördüyseniz ve kaldırılmasını istiyorsanız, aşağıdaki araç üzerinden fotoğrafı yükleyen kişiye doğrudan ulaşabilir veya moderasyon talebi iletebilirsiniz.',
+    badge: 'Kişisel Haklar & Mahremiyet',
+    introAlert:
+      'Phoem açık bir protokoldür; fotoğraflar doğrudan fotoğrafçıların Blossom sunucularında barındırılır. Bu form, fotoğrafı yükleyen kişiye Nostr üzerinden ulaşmanız için gerekli bilgileri ve hazır mesaj şablonunu hazırlar.',
+    formTitle: 'Fotoğraf ve Yükleyici Bilgileri',
+    photoHashLabel: 'Fotoğraf SHA-256 Hash Kodu',
+    photoHashPlaceholder: 'Örn: a3f5b8c... (64 karakterli hex hash)',
+    photoUrlLabel: 'Fotoğraf / Görsel Adresi (URL)',
+    photoUrlPlaceholder: 'https://cdn.example.com/sha256...',
+    uploaderLabel: 'Fotoğrafı Yükleyen Kişi (Nostr Pubkey veya npub)',
+    uploaderPlaceholder: 'npub1... veya 64 karakterli hex pubkey',
+    albumLabel: 'Etkinlik / Albüm Bilgisi',
+    albumPlaceholder: 'Etkinlik adı veya naddr...',
+    reasonLabel: 'Kaldırma Talebi Nedeni',
+    reasonLikeness: 'Bu fotoğrafta ben varım ve yayınlanmasına rızam yok',
+    reasonCopyright: 'Telif hakkı bana ait / izinsiz çekim',
+    reasonPrivacy: 'Kişisel mahremiyet veya hassas içerik',
+    reasonOther: 'Diğer / Açıklama gerektiren durum',
+    additionalDetailsLabel: 'Ek Açıklama (İsteğe bağlı)',
+    additionalDetailsPlaceholder:
+      'Fotoğrafçıya iletmek istediğiniz ek bir not...',
+    contactUploaderTitle: 'Fotoğrafçıya Ulaşın',
+    contactUploaderDesc:
+      'Fotoğrafı sistemden ve Blossom sunucusundan yalnızca yükleyen kişi kalıcı olarak silebilir. Aşağıdaki kanallardan fotoğrafçıya mesaj gönderebilirsiniz:',
+    openInPrimal: "Primal'da Aç & DM At",
+    openInNjump: "njump'ta Profili Görüntüle",
+    openInCoracle: "Coracle'da Aç",
+    openInNostrApp: 'Nostr İstemcinizde Aç (nostr:)',
+    copyMessageBtn: 'Talep Metnini Kopyala',
+    messageCopied: 'Talep metni panoya kopyalandı!',
+    messageTemplateLabel: 'Fotoğrafçıya Gönderilecek Hazır Mesaj',
+    sendDirectDm: 'Doğrudan Nostr DM Gönder',
+    dmSentSuccess: 'Mesajınız Nostr üzerinden başarıyla iletildi!',
+    fallbackTitle: 'Fotoğrafçı Yanıt Vermezse Ne Yapabilirsiniz?',
+    fallbackDesc:
+      'Fotoğrafçı makul bir süre içinde yanıt vermezse aşağıdaki adımlarla devam edebilirsiniz:',
+    blossomTakedownTitle: '1. Blossom Medya Sunucusu Kaldırma Talebi',
+    blossomTakedownDesc:
+      'Fotoğrafın barındırıldığı sunucu adresinin iletişim kanallarına (veya abuse@ adresine) SHA-256 hash kodunu belirterek hak ihlali bildiriminde bulunabilirsiniz.',
+    escalateToPlatform:
+      '2. Phoem İstemci Engelleme Bildirimi: nostr@photo.emre.xyz e-posta adresine veya NIP-05 adresimize durumu bildirebilirsiniz; görsel Phoem arayüzünden filtrelenecektir.',
+    emptyUploaderNotice:
+      'Lütfen yukarıdaki forma fotoğrafın SHA-256 hash kodunu veya fotoğrafı yükleyen kişinin Nostr adresini girin.',
+    invalidHashNotice: 'Geçersiz SHA-256 hash kodu.',
+    resolvedNpub: 'Çözümlenen Nostr Adresi',
+    copyNpub: 'npub Kopyala',
+    copiedNpub: 'Kopyalandı',
+    readPolicyLink: 'Gizlilik ve Fotoğraf Politikamızı İnceleyin',
+    howItWorksTitle: 'Kaldırma Süreci Nasıl İşler?',
+    step1Guide:
+      '1. Fotoğrafın detaylarından (veya albümdeki Lightbox bilgi menüsünden) SHA-256 kodunu alın.',
+    step2Guide:
+      '2. Yükleyicinin açık profilini açarak hazırlanan metinle birlikte fotoğrafı silmesini rica edin.',
+    step3Guide:
+      '3. Yükleyici Blossom sunucusundan Kind 24242 imzasıyla fotoğrafı silerek kaldırır.',
   },
 };

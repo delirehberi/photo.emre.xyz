@@ -1,0 +1,357 @@
+---
+import BaseLayout from '@/layouts/BaseLayout.astro';
+import Header from '@/components/Header.astro';
+import Button from '@/components/ui/Button.astro';
+import {
+  getLocaleFromUrl,
+  getDictionary,
+  getLocalizedPath,
+} from '@/lib/i18n/context';
+import {
+  ShieldCheck,
+  UserCheck,
+  Camera,
+  Layers,
+  ArrowRight,
+  Lock,
+  FileText,
+} from 'lucide-react';
+
+export const prerender = false;
+
+const locale = getLocaleFromUrl(Astro.url);
+const t = getDictionary(locale);
+const deleteRequestHref = getLocalizedPath('/delete-request', locale);
+const contactHref = getLocalizedPath('/contact', locale);
+---
+
+<BaseLayout
+  title={locale === 'en'
+    ? 'Community Policy & Likeness Rights — Phoem'
+    : 'Topluluk Politikası ve Kişisel Haklar — Phoem'}
+  description={locale === 'en'
+    ? 'Principles regarding personal privacy, likeness rights, and photo removal in the sovereign Phoem ecosystem.'
+    : 'Phoem egemen ekosisteminde kişisel mahremiyet, görüntü hakkı ve fotoğraf kaldırma ilkeleri.'}
+  lang={locale}
+>
+  <Header slot="header" />
+
+  <main class="container mx-auto px-4 sm:px-6 py-12 sm:py-20 max-w-4xl">
+    <!-- Hero Header -->
+    <div class="text-center max-w-3xl mx-auto space-y-4 mb-16">
+      <div
+        class="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-amber-500/10 border border-amber-500/20 text-amber-700 text-xs font-semibold tracking-wide uppercase"
+      >
+        <ShieldCheck className="h-3.5 w-3.5 text-amber-600" />
+        <span>{t.policy.badge}</span>
+      </div>
+
+      <h1
+        class="text-3xl sm:text-5xl font-extrabold text-zinc-950 tracking-tight leading-tight text-balance"
+      >
+        {t.policy.title}
+      </h1>
+
+      <p
+        class="text-base sm:text-lg text-zinc-600 leading-relaxed max-w-2xl mx-auto"
+      >
+        {t.policy.subtitle}
+      </p>
+
+      <div class="pt-2 flex flex-wrap justify-center items-center gap-3">
+        <Button
+          variant="default"
+          size="lg"
+          href={deleteRequestHref}
+          className="h-10 px-5 font-semibold bg-zinc-900 hover:bg-zinc-800 text-white gap-2 shadow-xs inline-flex items-center"
+        >
+          <span>{t.policy.ctaBtn}</span>
+          <ArrowRight className="h-4 w-4 shrink-0" />
+        </Button>
+        <Button
+          variant="outline"
+          size="lg"
+          href={contactHref}
+          className="h-10 px-5 font-medium border-zinc-300 text-zinc-800 hover:bg-zinc-100 inline-flex items-center"
+        >
+          <span>{t.nav.contact}</span>
+        </Button>
+      </div>
+    </div>
+
+    <!-- Policy Content Sections -->
+    <div class="space-y-12">
+      <!-- Section 1: Sovereignty & Decentralization -->
+      <section
+        class="rounded-2xl border border-zinc-200/90 bg-white p-6 sm:p-8 shadow-xs"
+      >
+        <div class="flex items-start gap-4">
+          <div
+            class="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-amber-50 text-amber-600 border border-amber-200"
+          >
+            <Layers className="h-5 w-5" />
+          </div>
+          <div class="space-y-3">
+            <h2
+              class="text-xl sm:text-2xl font-bold text-zinc-900 tracking-tight"
+            >
+              {t.policy.sovereigntyTitle}
+            </h2>
+            <p class="text-sm sm:text-base text-zinc-600 leading-relaxed">
+              {t.policy.sovereigntyDesc}
+            </p>
+            <div
+              class="mt-3 p-4 rounded-xl bg-zinc-50 border border-zinc-200/80 font-mono text-xs text-zinc-700 space-y-1.5"
+            >
+              <div class="font-semibold text-zinc-900 font-sans mb-1">
+                {
+                  locale === 'en'
+                    ? 'Data Provenance Architecture:'
+                    : 'Veri Sahipliği Mimarisi:'
+                }
+              </div>
+              <p>
+                • {
+                  locale === 'en'
+                    ? 'Metadata: Cryptographically signed Nostr events (Kind 30004 & 1063)'
+                    : 'Meta Veri: Kriptografik imzalı Nostr etkinlikleri (Kind 30004 & 1063)'
+                }
+              </p>
+              <p>
+                • {
+                  locale === 'en'
+                    ? 'Media Blobs: Independent Blossom HTTP servers (BUD-01 / BUD-02)'
+                    : 'Medya Dosyaları: Bağımsız Blossom HTTP sunucuları (BUD-01 / BUD-02)'
+                }
+              </p>
+              <p>
+                • {
+                  locale === 'en'
+                    ? 'Client: photo.emre.xyz serves as an open-source viewer & edge aggregator'
+                    : 'İstemci: photo.emre.xyz açık kaynaklı bir görüntüleyici ve uç dağıtıcıdır'
+                }
+              </p>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- Section 2: Likeness & Privacy Rights -->
+      <section
+        class="rounded-2xl border border-zinc-200/90 bg-white p-6 sm:p-8 shadow-xs"
+      >
+        <div class="flex items-start gap-4">
+          <div
+            class="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-emerald-50 text-emerald-600 border border-emerald-200"
+          >
+            <UserCheck className="h-5 w-5" />
+          </div>
+          <div class="space-y-3">
+            <h2
+              class="text-xl sm:text-2xl font-bold text-zinc-900 tracking-tight"
+            >
+              {t.policy.likenessRightsTitle}
+            </h2>
+            <p class="text-sm sm:text-base text-zinc-600 leading-relaxed">
+              {t.policy.likenessRightsDesc}
+            </p>
+            <div
+              class="p-3.5 rounded-xl bg-emerald-50/60 border border-emerald-200 text-xs sm:text-sm text-emerald-900 leading-relaxed"
+            >
+              <strong
+                >{locale === 'en' ? 'Key Principle:' : 'Temel İlke:'}</strong
+              >{' '}
+              {
+                locale === 'en'
+                  ? 'Your right to privacy and personal dignity precedes open publishing. Any attendee depicted in a photograph can request its retraction without needing to prove malicious intent.'
+                  : 'Mahremiyet ve kişisel saygınlık hakkınız, açık yayıncılığın önündedir. Bir fotoğrafta yer alan herhangi bir katılımcı, kötü niyet kanıtlama zorunluluğu olmaksızın görselin kaldırılmasını talep edebilir.'
+              }
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- Section 3: Photographer & Organizer Duties -->
+      <section
+        class="rounded-2xl border border-zinc-200/90 bg-white p-6 sm:p-8 shadow-xs"
+      >
+        <div class="flex items-start gap-4">
+          <div
+            class="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-blue-50 text-blue-600 border border-blue-200"
+          >
+            <Camera className="h-5 w-5" />
+          </div>
+          <div class="space-y-3">
+            <h2
+              class="text-xl sm:text-2xl font-bold text-zinc-900 tracking-tight"
+            >
+              {t.policy.photographerDutiesTitle}
+            </h2>
+            <p class="text-sm sm:text-base text-zinc-600 leading-relaxed">
+              {t.policy.photographerDutiesDesc}
+            </p>
+            <ul class="space-y-2 text-sm text-zinc-600 list-disc list-inside">
+              <li>
+                {
+                  locale === 'en'
+                    ? 'Do not publish photos taken in private, resting, or sensitive event zones.'
+                    : 'Özel, dinlenme veya hassas etkinlik alanlarında çekilen fotoğrafları yüklemeyin.'
+                }
+              </li>
+              <li>
+                {
+                  locale === 'en'
+                    ? 'Respect verbal or written non-consent requests during the event.'
+                    : 'Etkinlik sırasında katılımcılardan gelen sözlü veya yazılı rıza göstermeme beyanlarına uyun.'
+                }
+              </li>
+              <li>
+                {
+                  locale === 'en'
+                    ? 'Acknowledge deletion requests within 48 hours and delete the blob from Blossom.'
+                    : 'Gelen silme taleplerini en geç 48 saat içinde yanıtlayın ve Blossom sunucunuzdan kaldırın.'
+                }
+              </li>
+            </ul>
+          </div>
+        </div>
+      </section>
+
+      <!-- Section 4: Technical Deletion Mechanics -->
+      <section
+        class="rounded-2xl border border-zinc-200/90 bg-white p-6 sm:p-8 shadow-xs"
+      >
+        <div class="flex items-start gap-4">
+          <div
+            class="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-purple-50 text-purple-600 border border-purple-200"
+          >
+            <Lock className="h-5 w-5" />
+          </div>
+          <div class="space-y-4 flex-1">
+            <div>
+              <h2
+                class="text-xl sm:text-2xl font-bold text-zinc-900 tracking-tight"
+              >
+                {t.policy.technicalDeletionTitle}
+              </h2>
+              <p
+                class="mt-1 text-sm sm:text-base text-zinc-600 leading-relaxed"
+              >
+                {t.policy.technicalDeletionDesc}
+              </p>
+            </div>
+
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4 pt-1">
+              <div
+                class="p-4 rounded-xl bg-zinc-50 border border-zinc-200/80 space-y-2"
+              >
+                <span
+                  class="font-mono text-xs font-bold text-amber-700 uppercase block"
+                >
+                  Blossom (BUD-01 / BUD-02)
+                </span>
+                <p class="text-xs text-zinc-600 leading-relaxed">
+                  {t.policy.blossomMechanism}
+                </p>
+              </div>
+
+              <div
+                class="p-4 rounded-xl bg-zinc-50 border border-zinc-200/80 space-y-2"
+              >
+                <span
+                  class="font-mono text-xs font-bold text-indigo-700 uppercase block"
+                >
+                  Nostr (NIP-09 Deletion)
+                </span>
+                <p class="text-xs text-zinc-600 leading-relaxed">
+                  {t.policy.nostrMechanism}
+                </p>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- Section 5: Step-by-Step Resolution Process -->
+      <section
+        class="rounded-2xl border border-zinc-200/90 bg-white p-6 sm:p-8 shadow-xs"
+      >
+        <div class="space-y-6">
+          <div class="flex items-center gap-3">
+            <div
+              class="flex h-10 w-10 items-center justify-center rounded-xl bg-amber-50 text-amber-600 border border-amber-200"
+            >
+              <FileText className="h-5 w-5" />
+            </div>
+            <h2
+              class="text-xl sm:text-2xl font-bold text-zinc-900 tracking-tight"
+            >
+              {t.policy.resolutionStepsTitle}
+            </h2>
+          </div>
+
+          <div class="grid grid-cols-1 gap-4">
+            <!-- Step 1 -->
+            <div
+              class="p-4 rounded-xl border border-zinc-200/80 bg-zinc-50/50 space-y-1.5"
+            >
+              <h3 class="font-semibold text-zinc-900 text-sm sm:text-base">
+                {t.policy.step1Title}
+              </h3>
+              <p class="text-xs sm:text-sm text-zinc-600 leading-relaxed">
+                {t.policy.step1Desc}
+              </p>
+            </div>
+
+            <!-- Step 2 -->
+            <div
+              class="p-4 rounded-xl border border-zinc-200/80 bg-zinc-50/50 space-y-1.5"
+            >
+              <h3 class="font-semibold text-zinc-900 text-sm sm:text-base">
+                {t.policy.step2Title}
+              </h3>
+              <p class="text-xs sm:text-sm text-zinc-600 leading-relaxed">
+                {t.policy.step2Desc}
+              </p>
+            </div>
+
+            <!-- Step 3 -->
+            <div
+              class="p-4 rounded-xl border border-zinc-200/80 bg-zinc-50/50 space-y-1.5"
+            >
+              <h3 class="font-semibold text-zinc-900 text-sm sm:text-base">
+                {t.policy.step3Title}
+              </h3>
+              <p class="text-xs sm:text-sm text-zinc-600 leading-relaxed">
+                {t.policy.step3Desc}
+              </p>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- Bottom Callout -->
+      <div
+        class="rounded-2xl border border-amber-500/30 bg-gradient-to-br from-amber-50/60 to-white p-6 sm:p-8 text-center space-y-4"
+      >
+        <h3 class="text-xl font-bold text-zinc-900 tracking-tight">
+          {t.policy.ctaTitle}
+        </h3>
+        <p class="text-sm text-zinc-600 max-w-xl mx-auto leading-relaxed">
+          {t.policy.ctaDesc}
+        </p>
+        <div class="pt-2">
+          <Button
+            variant="default"
+            size="lg"
+            href={deleteRequestHref}
+            className="h-11 px-6 font-semibold bg-zinc-900 hover:bg-zinc-800 text-white gap-2 shadow-xs inline-flex items-center"
+          >
+            <span>{t.policy.ctaBtn}</span>
+            <ArrowRight className="h-4 w-4 shrink-0" />
+          </Button>
+        </div>
+      </div>
+    </div>
+  </main>
+</BaseLayout>

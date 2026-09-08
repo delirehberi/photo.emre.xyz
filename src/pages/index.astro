@@ -25,6 +25,15 @@ export const prerender = false;
 const locale = getLocaleFromUrl(Astro.url);
 const t = getDictionary(locale);
 const allEvents = await fetchEventAlbums();
+
+// Prevent edge cache poisoning when relay queries return empty due to latency or cold mesh
+if (allEvents.length === 0) {
+  Astro.response.headers.set(
+    'Cache-Control',
+    'private, no-cache, no-store, must-revalidate',
+  );
+}
+
 // Featured events for homepage (take top 6 for rich grid)
 const featuredEvents = allEvents.slice(0, 6);
 const eventsHref = getLocalizedPath('/events', locale);

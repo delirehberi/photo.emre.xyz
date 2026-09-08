@@ -3,7 +3,7 @@ import * as DialogPrimitive from '@radix-ui/react-dialog';
 import type { PhotoMetadata } from '@/lib/nostr/types';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { useI18n } from '@/lib/i18n/context';
+import { useI18n, getLocalizedPath } from '@/lib/i18n/context';
 import {
   ChevronLeft,
   ChevronRight,
@@ -13,9 +13,11 @@ import {
   Camera,
   Copy,
   Check,
+  ShieldAlert,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { getThumbnailUrl } from '@/lib/media';
+import { DEFAULT_BLOSSOM_SERVER } from '@/lib/blossom/config';
 
 export interface LightboxProps {
   photos: PhotoMetadata[];
@@ -36,7 +38,7 @@ export function Lightbox({
   albumTitle,
   defaultExifOpen = false,
 }: LightboxProps) {
-  const { t } = useI18n();
+  const { t, locale } = useI18n();
   const [currentIndex, setCurrentIndex] = useState<number>(0);
   const [isExifOpen, setIsExifOpen] = useState(defaultExifOpen);
   const [copiedHash, setCopiedHash] = useState(false);
@@ -164,9 +166,9 @@ export function Lightbox({
     organizerPubkey &&
     currentPhoto.pubkey.toLowerCase() !== organizerPubkey.toLowerCase();
 
-  const downloadUrl = `/api/download/${currentPhoto.sha256}?album=${encodeURIComponent(
-    currentPhoto.albumCoordinate,
-  )}`;
+  const downloadUrl =
+    currentPhoto.url ||
+    `${DEFAULT_BLOSSOM_SERVER.replace(/\/+$/, '')}/${currentPhoto.sha256}`;
 
   return (
     <DialogPrimitive.Root open={open} onOpenChange={onOpenChange}>
@@ -215,14 +217,14 @@ export function Lightbox({
 
               <a
                 href={downloadUrl}
+                target="_blank"
+                rel="noopener noreferrer"
                 download
                 className="inline-flex items-center justify-center rounded-md border border-zinc-800 bg-zinc-900 px-3 py-1.5 text-xs font-semibold text-zinc-200 transition hover:bg-zinc-800 hover:text-white h-8 gap-1.5"
-                title={t.lightbox.downloadWatermarked}
+                title={t.lightbox.download}
               >
                 <Download className="h-3.5 w-3.5 text-amber-400" />
-                <span className="hidden sm:inline">
-                  {t.lightbox.downloadWatermarked}
-                </span>
+                <span className="hidden sm:inline">{t.lightbox.download}</span>
               </a>
 
               <DialogPrimitive.Close asChild>
@@ -455,6 +457,25 @@ export function Lightbox({
                       <span className="font-mono text-[11px] text-zinc-400 break-all">
                         {currentPhoto.pubkey}
                       </span>
+                    </div>
+
+                    <div className="pt-2 border-t border-zinc-800/60">
+                      <a
+                        href={`${getLocalizedPath('/delete-request', locale)}?photo=${encodeURIComponent(
+                          currentPhoto.sha256,
+                        )}&pubkey=${encodeURIComponent(
+                          currentPhoto.pubkey,
+                        )}&album=${encodeURIComponent(
+                          currentPhoto.albumCoordinate || '',
+                        )}&url=${encodeURIComponent(currentPhoto.url)}`}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="inline-flex items-center gap-1.5 text-[11px] font-semibold text-amber-400/90 hover:text-amber-300 transition-colors"
+                        title={t.footer.deleteRequest}
+                      >
+                        <ShieldAlert className="h-3.5 w-3.5 text-amber-400" />
+                        <span>{t.footer.deleteRequest}</span>
+                      </a>
                     </div>
                   </div>
                 </div>

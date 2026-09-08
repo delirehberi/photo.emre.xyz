@@ -80,7 +80,23 @@ export const onRequest = defineMiddleware(async (context, next) => {
 
   // 5. Apply SWR and Cache-Control on cacheable responses (status 200)
   if (response.status === 200) {
-    if (!responseHeaders.has('Cache-Control')) {
+    const rawCacheControl = responseHeaders.get('Cache-Control');
+    const isExplicitlyUncacheable =
+      rawCacheControl &&
+      (rawCacheControl.includes('no-store') ||
+        rawCacheControl.includes('no-cache') ||
+        rawCacheControl.includes('private'));
+
+    if (isExplicitlyUncacheable) {
+      responseHeaders.set('X-Cache', 'BYPASS');
+      return new Response(response.body, {
+        status: response.status,
+        statusText: response.statusText,
+        headers: responseHeaders,
+      });
+    }
+
+    if (!rawCacheControl) {
       responseHeaders.set(
         'Cache-Control',
         `public, max-age=${DEFAULT_CACHE_CONFIG.CLIENT_MAX_AGE}, s-maxage=${DEFAULT_CACHE_CONFIG.S_MAX_AGE}, stale-while-revalidate=${DEFAULT_CACHE_CONFIG.STALE_WHILE_REVALIDATE}`,

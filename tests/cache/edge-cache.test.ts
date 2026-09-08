@@ -103,6 +103,30 @@ describe('EdgeCacheManager & Cache Helpers', () => {
       expect(cached).toBeNull();
     });
 
+    it('does not cache responses with no-store, no-cache, or private Cache-Control', async () => {
+      const urlNoStore = 'https://photo.emre.xyz/events';
+      const responseNoStore = new Response('Empty Events', {
+        status: 200,
+        headers: {
+          'Cache-Control': 'private, no-cache, no-store, must-revalidate',
+        },
+      });
+
+      await cacheManager.put(urlNoStore, responseNoStore);
+      const cachedNoStore = await cacheManager.match(urlNoStore);
+      expect(cachedNoStore).toBeNull();
+
+      const urlPrivate = 'https://photo.emre.xyz/admin';
+      const responsePrivate = new Response('Admin', {
+        status: 200,
+        headers: { 'Cache-Control': 'private' },
+      });
+
+      await cacheManager.put(urlPrivate, responsePrivate);
+      const cachedPrivate = await cacheManager.match(urlPrivate);
+      expect(cachedPrivate).toBeNull();
+    });
+
     it('deletes cached entries properly', async () => {
       const url = 'https://photo.emre.xyz/album/to-delete';
       const response = new Response('OK', { status: 200 });
@@ -115,20 +139,40 @@ describe('EdgeCacheManager & Cache Helpers', () => {
       expect(await cacheManager.match(url)).toBeNull();
     });
 
-    it('invalidates coordinate and expands corresponding URLs', async () => {
+    it('invalidates coordinate and expands corresponding URLs including listing directories', async () => {
       const coordinate =
         '31922:46f3c7bb33cc3019049b76dc89dbb96e34c247bdda68b6ad8632682793ff8a1a:berlin-summit';
       const slugUrl = 'https://photo.emre.xyz/album/berlin-summit';
+      const eventsUrl = 'https://photo.emre.xyz/events';
+      const homeUrl = 'https://photo.emre.xyz/';
 
       await cacheManager.put(
         slugUrl,
         new Response('Album Page', { status: 200 }),
       );
+      await cacheManager.put(
+        eventsUrl,
+        new Response('Events Page', { status: 200 }),
+      );
+      await cacheManager.put(
+        homeUrl,
+        new Response('Home Page', { status: 200 }),
+      );
+
       expect(await cacheManager.match(slugUrl)).not.toBeNull();
+      expect(await cacheManager.match(eventsUrl)).not.toBeNull();
+      expect(await cacheManager.match(homeUrl)).not.toBeNull();
 
       const purged = await cacheManager.invalidateCoordinate(coordinate);
       expect(purged).toContain(slugUrl);
+      expect(purged).toContain(eventsUrl);
+      expect(purged).toContain(homeUrl);
+      expect(purged).toContain('https://photo.emre.xyz/en');
+      expect(purged).toContain('https://photo.emre.xyz/en/events');
+
       expect(await cacheManager.match(slugUrl)).toBeNull();
+      expect(await cacheManager.match(eventsUrl)).toBeNull();
+      expect(await cacheManager.match(homeUrl)).toBeNull();
     });
 
     it('enforces LRU capacity limit and evicts oldest entries', async () => {

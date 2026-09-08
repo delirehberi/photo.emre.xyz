@@ -59,12 +59,6 @@ describe('Production HTTP Security Headers & Edge Cache Routing', () => {
       expect(isCacheableRoute('/contact', 'GET')).toBe(true);
       expect(isCacheableRoute('/album/summit-2026', 'GET')).toBe(true);
       expect(isCacheableRoute('/org/npub1xyz', 'GET')).toBe(true);
-      expect(
-        isCacheableRoute(
-          '/api/download/e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855',
-          'GET',
-        ),
-      ).toBe(true);
     });
 
     it('strictly forbids caching of admin, mutation, and creation endpoints', () => {

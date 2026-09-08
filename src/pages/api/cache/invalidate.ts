@@ -177,18 +177,6 @@ export const POST: APIRoute = async ({ request }) => {
     }
   }
 
-  // Invalidate photo hashes (download endpoints)
-  if (Array.isArray(body.hashes)) {
-    for (const hash of body.hashes) {
-      if (typeof hash === 'string') {
-        const downloadPath = `/api/download/${hash.toLowerCase()}`;
-        const fullUrl = normalizeCacheKey(downloadPath, origin);
-        await edgeCache.delete(fullUrl);
-        purged.push(fullUrl);
-      }
-    }
-  }
-
   return new Response(
     JSON.stringify({
       success: true,
