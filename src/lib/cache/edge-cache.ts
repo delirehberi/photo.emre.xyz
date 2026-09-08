@@ -7,6 +7,11 @@
  * edge invalidation for zero-database Nostr relay payloads and SSR pages.
  */
 
+import {
+  resolveAlbumTarget,
+  encodeAlbumNaddr,
+} from '@/lib/nostr/identifiers';
+
 export interface CacheOptions {
   /** Edge time-to-live in seconds (s-maxage) */
   sMaxAge?: number;
@@ -274,6 +279,24 @@ export class EdgeCacheManager {
         pathsToPurge.push(`/album/${dTag}`);
         pathsToPurge.push(`/en/album/${dTag}`);
       }
+    }
+
+    try {
+      const resolved = resolveAlbumTarget(coordinateOrSlug);
+      if (resolved.pubkey && resolved.dTag) {
+        const naddr = encodeAlbumNaddr({
+          pubkey: resolved.pubkey,
+          dTag: resolved.dTag,
+        });
+        pathsToPurge.push(`/album/${naddr}`);
+        pathsToPurge.push(`/en/album/${naddr}`);
+      }
+      if (resolved.dTag) {
+        pathsToPurge.push(`/album/${resolved.dTag}`);
+        pathsToPurge.push(`/en/album/${resolved.dTag}`);
+      }
+    } catch {
+      // Ignore identifier resolution error during purge
     }
 
     for (const path of pathsToPurge) {

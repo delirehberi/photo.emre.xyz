@@ -3,6 +3,7 @@ import {
   formatEventDateTime,
   type EventWithOrg,
 } from '@/lib/nostr/events-data';
+import { encodeAlbumNaddr } from '@/lib/nostr/identifiers';
 import type { Locale } from '@/lib/i18n/dictionary';
 import {
   getLocaleFromUrl,
@@ -31,7 +32,8 @@ const { item, isPriority = false } = Astro.props;
 const locale = Astro.props.locale || getLocaleFromUrl(Astro.url);
 const t = getDictionary(locale);
 
-const albumHref = getLocalizedPath(`/album/${item.album.dTag}`, locale);
+const albumNaddr = encodeAlbumNaddr(item.album);
+const albumHref = getLocalizedPath(`/album/${albumNaddr}`, locale);
 const orgHref = item.org
   ? getLocalizedPath(`/org/${item.org.pubkey}`, locale)
   : '#';

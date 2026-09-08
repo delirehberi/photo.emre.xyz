@@ -6,6 +6,7 @@ import {
   formatEventDateTime,
 } from '@/lib/nostr/events-data';
 import { pubkeyToNpub } from '@/lib/nostr/keys';
+import { encodeAlbumNaddr } from '@/lib/nostr/identifiers';
 import { Badge } from '@/components/ui/badge';
 import Button from '@/components/ui/Button.astro';
 import { OrgZapButton } from '@/components/lightning';
@@ -235,7 +236,7 @@ if (org.website) {
           <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
             {events.map((event) => {
               const albumHref = getLocalizedPath(
-                `/album/${event.dTag}`,
+                `/album/${encodeAlbumNaddr(event)}`,
                 locale,
               );
               const startDate = event.startDate

@@ -8,6 +8,7 @@
 
 import type { APIRoute } from 'astro';
 import { fetchEventAlbums } from '@/lib/nostr/events-data';
+import { encodeAlbumNaddr } from '@/lib/nostr/identifiers';
 
 export const prerender = false;
 
@@ -160,29 +161,36 @@ export const GET: APIRoute = async ({ site, url }) => {
     const eventsWithOrg = await fetchEventAlbums();
     for (const item of eventsWithOrg) {
       const album = item.album;
-      const slug = album.dTag || album.id;
+      let albumPath = '';
+      try {
+        const naddr = encodeAlbumNaddr(album);
+        albumPath = naddr;
+      } catch {
+        albumPath = album.coordinate || album.id;
+      }
+
       const lastmod = album.createdAt
         ? new Date(album.createdAt * 1000).toISOString().split('T')[0]
         : undefined;
 
       urls.push(
         {
-          loc: `${origin}/album/${slug}`,
+          loc: `${origin}/album/${albumPath}`,
           alternates: [
-            { lang: 'tr', href: `${origin}/album/${slug}` },
-            { lang: 'en', href: `${origin}/en/album/${slug}` },
-            { lang: 'x-default', href: `${origin}/album/${slug}` },
+            { lang: 'tr', href: `${origin}/album/${albumPath}` },
+            { lang: 'en', href: `${origin}/en/album/${albumPath}` },
+            { lang: 'x-default', href: `${origin}/album/${albumPath}` },
           ],
           lastmod,
           changefreq: 'weekly',
           priority: '0.8',
         },
         {
-          loc: `${origin}/en/album/${slug}`,
+          loc: `${origin}/en/album/${albumPath}`,
           alternates: [
-            { lang: 'tr', href: `${origin}/album/${slug}` },
-            { lang: 'en', href: `${origin}/en/album/${slug}` },
-            { lang: 'x-default', href: `${origin}/album/${slug}` },
+            { lang: 'tr', href: `${origin}/album/${albumPath}` },
+            { lang: 'en', href: `${origin}/en/album/${albumPath}` },
+            { lang: 'x-default', href: `${origin}/album/${albumPath}` },
           ],
           lastmod,
           changefreq: 'weekly',

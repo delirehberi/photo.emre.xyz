@@ -11,6 +11,7 @@ interface Props {
   description?: string;
   image?: string;
   lang?: string;
+  canonical?: string;
   jsonLd?: Record<string, unknown> | Array<Record<string, unknown>>;
 }
 
@@ -48,7 +49,9 @@ const siteOrigin = (Astro.site?.toString() || 'https://photo.emre.xyz').replace(
   '',
 );
 
-const canonicalURL = new URL(Astro.url.pathname, siteOrigin);
+const canonicalURL = Astro.props.canonical
+  ? new URL(Astro.props.canonical, siteOrigin)
+  : new URL(Astro.url.pathname, siteOrigin);
 
 // Ensure absolute URL for Open Graph and Twitter image preview cards
 const absoluteImageUrl =

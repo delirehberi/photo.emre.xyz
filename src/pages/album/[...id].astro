@@ -1,0 +1,189 @@
+---
+import BaseLayout from '@/layouts/BaseLayout.astro';
+import Header from '@/components/Header.astro';
+import { DualSectionGallery } from '@/components/gallery/DualSectionGallery';
+import { getSharedRelayPool } from '@/lib/nostr/pool';
+import { DEFAULT_RELAYS, NOSTR_KINDS } from '@/lib/nostr/config';
+import { parseEventAlbum } from '@/lib/nostr/schemas/album';
+import { parsePhotoEvent } from '@/lib/nostr/schemas/photo';
+import { parseProfileEvent } from '@/lib/nostr/schemas/profile';
+import { partitionPhotos } from '@/lib/nostr/partition';
+import {
+  resolveAlbumTarget,
+  encodeAlbumNaddr,
+} from '@/lib/nostr/identifiers';
+import type {
+  EventAlbum,
+  PhotoMetadata,
+  OrganizationProfile,
+} from '@/lib/nostr/types';
+import { getLocaleFromUrl } from '@/lib/i18n/context';
+
+export const prerender = false;
+
+const locale = getLocaleFromUrl(Astro.url);
+const { id } = Astro.params;
+const photoParam = Astro.url.searchParams.get('photo');
+
+let album: EventAlbum | null = null;
+let officialPhotos: PhotoMetadata[] = [];
+let communityPhotos: PhotoMetadata[] = [];
+let organizerProfile: OrganizationProfile | null = null;
+let targetRelays: string[] = Array.from(DEFAULT_RELAYS);
+
+if (id) {
+  try {
+    const resolved = resolveAlbumTarget(id);
+    if (resolved.relays && resolved.relays.length > 0) {
+      targetRelays = Array.from(
+        new Set([...DEFAULT_RELAYS, ...resolved.relays]),
+      );
+    }
+
+    const pool = getSharedRelayPool();
+    const albumEvent = await pool.queryOne(targetRelays, resolved.filter, {
+      timeoutMs: 2500,
+    });
+
+    if (albumEvent) {
+      album = parseEventAlbum(albumEvent);
+
+      // Fetch Kind 1063 photos referencing this coordinate
+      const photoEvents = await pool.queryEvents(
+        targetRelays,
+        {
+          kinds: [NOSTR_KINDS.PHOTO_METADATA],
+          '#a': [album.coordinate],
+        },
+        { timeoutMs: 2000 },
+      );
+
+      const parsedPhotos: PhotoMetadata[] = [];
+      for (const pe of photoEvents) {
+        try {
+          parsedPhotos.push(parsePhotoEvent(pe));
+        } catch {
+          // Discard invalid photo events
+        }
+      }
+
+      const partitioned = partitionPhotos(parsedPhotos, album.pubkey);
+      officialPhotos = partitioned.official;
+      communityPhotos = partitioned.community;
+
+      // Fetch Kind 0 Organizer Profile
+      const profileEvent = await pool.queryOne(
+        targetRelays,
+        {
+          kinds: [NOSTR_KINDS.METADATA],
+          authors: [album.pubkey],
+        },
+        { timeoutMs: 1500 },
+      );
+
+      if (profileEvent) {
+        try {
+          organizerProfile = parseProfileEvent(profileEvent);
+        } catch {
+          // Ignore invalid profile
+        }
+      }
+    }
+  } catch (err) {
+    console.warn('Relay query error during album page SSR:', err);
+  }
+}
+
+if (album) {
+  // Edge caching with SWR for valid resolved live albums
+  Astro.response.headers.set(
+    'Cache-Control',
+    'public, max-age=0, s-maxage=60, stale-while-revalidate=300',
+  );
+} else {
+  // Never cache unresolved/cold relay states to prevent CDN cache poisoning
+  Astro.response.headers.set(
+    'Cache-Control',
+    'private, no-cache, no-store, must-revalidate',
+  );
+}
+
+const leadPhotoUrl =
+  officialPhotos[0]?.url || communityPhotos[0]?.url || '/og-image.jpg';
+
+const pageTitle = album
+  ? `${album.title} — photo.emre.xyz`
+  : locale === 'en'
+    ? 'Loading Event Album — photo.emre.xyz'
+    : 'Etkinlik Albümü Yükleniyor — photo.emre.xyz';
+
+const pageDescription =
+  album?.summary ||
+  (locale === 'en'
+    ? 'Sovereign event photo album powered by Nostr & Blossom'
+    : 'Nostr ve Blossom destekli bağımsız etkinlik fotoğraf albümü');
+
+let canonicalUrl = Astro.url.href;
+if (album) {
+  try {
+    const canonicalNaddr = encodeAlbumNaddr(album);
+    canonicalUrl = new URL(`/album/${canonicalNaddr}`, Astro.url.origin).href;
+  } catch {
+    // Keep current URL
+  }
+}
+
+const albumSchema: Record<string, unknown> = {
+  '@context': 'https://schema.org',
+  '@type': 'Event',
+  name: album?.title || 'Event Album',
+  description: album?.summary || pageDescription,
+  image: leadPhotoUrl,
+};
+
+if (album?.startDate) {
+  albumSchema.startDate = new Date(album.startDate * 1000).toISOString();
+}
+if (album?.endDate) {
+  albumSchema.endDate = new Date(album.endDate * 1000).toISOString();
+}
+if (album?.location) {
+  albumSchema.location = {
+    '@type': 'Place',
+    name: album.location,
+  };
+}
+if (organizerProfile) {
+  albumSchema.organizer = {
+    '@type': 'Organization',
+    name: organizerProfile.displayName || organizerProfile.name,
+    description: organizerProfile.about,
+    image: organizerProfile.picture,
+  };
+}
+---
+
+<BaseLayout
+  title={pageTitle}
+  description={pageDescription}
+  image={leadPhotoUrl}
+  lang={locale}
+  canonical={canonicalUrl}
+  jsonLd={albumSchema}
+>
+  <Header slot="header" />
+
+  <main class="container mx-auto px-4 sm:px-6 py-8 sm:py-12 max-w-7xl">
+    <DualSectionGallery
+      client:load
+      album={album}
+      officialPhotos={officialPhotos}
+      communityPhotos={communityPhotos}
+      organizerProfile={organizerProfile}
+      initialPhotoHash={photoParam}
+      initialLocale={locale}
+      initialLoading={!album}
+      targetId={id}
+    />
+  </main>
+</BaseLayout>

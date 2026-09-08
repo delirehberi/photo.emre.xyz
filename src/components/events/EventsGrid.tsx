@@ -9,6 +9,7 @@ import {
   fetchEventAlbums,
   type EventWithOrg,
 } from '@/lib/nostr/events-data';
+import { encodeAlbumNaddr } from '@/lib/nostr/identifiers';
 import { I18nProvider, useI18n, getLocalizedPath } from '@/lib/i18n/context';
 import type { Locale } from '@/lib/i18n/dictionary';
 import { Button } from '@/components/ui/button';
@@ -288,8 +289,9 @@ function EventsGridContent({
                   item.album.endDate,
                 )
               : null;
+            const albumNaddr = encodeAlbumNaddr(item.album);
             const albumHref = getLocalizedPath(
-              `/album/${item.album.dTag}`,
+              `/album/${albumNaddr}`,
               locale,
             );
             const orgHref = item.org

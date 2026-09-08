@@ -30,6 +30,7 @@ import {
 } from '@/lib/nostr/schemas/forms';
 import { getSharedRelayPool } from '@/lib/nostr/pool';
 import { DEFAULT_RELAYS } from '@/lib/nostr/config';
+import { encodeAlbumNaddr } from '@/lib/nostr/identifiers';
 import { BlossomClient } from '@/lib/blossom/client';
 import { calculateBlobSha256 } from '@/lib/blossom/hasher';
 import { extractImageDimensions } from '@/lib/media/dimensions';
@@ -132,7 +133,16 @@ export function EventAlbumCreator() {
 
     const targetDTag =
       publishedEvent.tags.find((t) => t[0] === 'd')?.[1] || dTag.trim();
-    const targetUrl = `/album/${encodeURIComponent(targetDTag)}`;
+    let targetUrl = `/album/${encodeURIComponent(targetDTag)}`;
+    try {
+      const naddr = encodeAlbumNaddr({
+        pubkey: publishedEvent.pubkey,
+        dTag: targetDTag,
+      });
+      targetUrl = `/album/${naddr}`;
+    } catch {
+      // Fallback if encoding fails
+    }
 
     if (redirectCountdown <= 0) {
       if (typeof window !== 'undefined') {
@@ -517,15 +527,19 @@ export function EventAlbumCreator() {
               <CheckCircle2 className="h-4 w-4 text-emerald-600 shrink-0" />
               <span>Etkinlik Albümü Başarıyla Yayınlandı!</span>
             </div>
-            {redirectCountdown !== null && (
-              <a
-                href={`/album/${encodeURIComponent(publishedEvent.tags.find((t) => t[0] === 'd')?.[1] || dTag.trim())}`}
-                className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-emerald-600 text-white text-xs font-semibold hover:bg-emerald-700 transition-colors shadow-xs w-fit"
-              >
-                <span>Hemen Git</span>
-                <ArrowRight className="h-3.5 w-3.5" />
-              </a>
-            )}
+            {redirectCountdown !== null && (() => {
+              const targetDTag = publishedEvent.tags.find((t) => t[0] === 'd')?.[1] || dTag.trim();
+              const naddr = encodeAlbumNaddr({ pubkey: publishedEvent.pubkey, dTag: targetDTag });
+              return (
+                <a
+                  href={`/album/${naddr}`}
+                  className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-emerald-600 text-white text-xs font-semibold hover:bg-emerald-700 transition-colors shadow-xs w-fit"
+                >
+                  <span>Hemen Git</span>
+                  <ArrowRight className="h-3.5 w-3.5" />
+                </a>
+              );
+            })()}
           </div>
 
           {redirectCountdown !== null && (
@@ -560,15 +574,20 @@ export function EventAlbumCreator() {
               </div>
             )}
             <div className="flex items-center justify-between pt-1 border-t border-zinc-100">
-              <span className="text-zinc-500">Albüm Bağlantısı:</span>
-              <a
-                href={`/album/${encodeURIComponent(publishedEvent.tags.find((t) => t[0] === 'd')?.[1] || dTag.trim())}`}
-                className="text-amber-600 font-semibold hover:underline"
-              >
-                /album/
-                {publishedEvent.tags.find((t) => t[0] === 'd')?.[1] ||
-                  dTag.trim()}
-              </a>
+              <span className="text-zinc-500">Nostr naddr:</span>
+              {(() => {
+                const targetDTag = publishedEvent.tags.find((t) => t[0] === 'd')?.[1] || dTag.trim();
+                const naddr = encodeAlbumNaddr({ pubkey: publishedEvent.pubkey, dTag: targetDTag });
+                return (
+                  <a
+                    href={`/album/${naddr}`}
+                    className="text-amber-600 font-semibold font-mono hover:underline truncate max-w-[200px]"
+                    title={naddr}
+                  >
+                    {naddr.slice(0, 16)}...{naddr.slice(-8)}
+                  </a>
+                );
+              })()}
             </div>
             <div className="flex items-center justify-between pt-1 border-t border-zinc-100 text-xs">
               <span className="text-zinc-500">Kayıt Türü:</span>

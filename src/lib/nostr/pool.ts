@@ -79,6 +79,7 @@ export class RelayPoolManager {
       try {
         if (typeof this.pool.subscribeEose === 'function') {
           closer = this.pool.subscribeEose(relayUrls, filter, {
+            maxWait: timeoutMs,
             onevent: (event: NostrEvent) => {
               if (!event || !event.id) return;
               if (eventMap.has(event.id)) return;
@@ -179,6 +180,7 @@ export class RelayPoolManager {
       try {
         if (typeof this.pool.subscribe === 'function') {
           closer = this.pool.subscribe(relayUrls, filter, {
+            maxWait: timeoutMs,
             onevent: (event: NostrEvent) => {
               if (!event || !event.id) return;
               if (verifySignatures) {
@@ -190,7 +192,6 @@ export class RelayPoolManager {
               }
               cleanupAndResolve(event);
             },
-            oneose: () => cleanupAndResolve(null),
             onclose: () => cleanupAndResolve(null),
           });
         } else if (typeof this.pool.get === 'function') {
