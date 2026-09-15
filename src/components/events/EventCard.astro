@@ -21,6 +21,7 @@ import {
   Building2,
 } from 'lucide-react';
 import { getThumbnailUrl } from '@/lib/media';
+import { EventCoverPlaceholder } from '@/components/events/EventCoverPlaceholder';
 
 interface Props {
   item: EventWithOrg;
@@ -64,9 +65,10 @@ const startDate = item.album.startDate
           decoding="async"
         />
       ) : (
-        <div class="flex h-full w-full items-center justify-center text-zinc-400 bg-zinc-50">
-          <Camera className="h-10 w-10 stroke-1 text-zinc-300" />
-        </div>
+        <EventCoverPlaceholder
+          seed={item.album.coordinate || item.album.id || item.album.title}
+          title={item.album.title}
+        />
       )
     }
 

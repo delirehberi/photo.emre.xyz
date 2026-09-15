@@ -27,11 +27,11 @@ import {
   Zap,
   Calendar,
   MapPin,
-  Camera,
   ArrowRight,
   ArrowLeft,
   RefreshCw,
 } from 'lucide-react';
+import { EventCoverPlaceholder } from '@/components/events/EventCoverPlaceholder';
 
 interface OrgProfileViewProps {
   initialOrg: OrganizationProfile;
@@ -300,9 +300,10 @@ function OrgProfileContent({
                         loading="lazy"
                       />
                     ) : (
-                      <div className="flex h-full w-full items-center justify-center text-zinc-400">
-                        <Camera className="h-8 w-8" />
-                      </div>
+                      <EventCoverPlaceholder
+                        seed={event.coordinate || event.id || event.title}
+                        title={event.title}
+                      />
                     )}
                   </a>
 

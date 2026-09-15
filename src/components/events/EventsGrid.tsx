@@ -26,6 +26,7 @@ import {
   Sparkles,
 } from 'lucide-react';
 import { getThumbnailUrl } from '@/lib/media';
+import { EventCoverPlaceholder } from '@/components/events/EventCoverPlaceholder';
 
 interface EventsGridProps {
   initialEvents: EventWithOrg[];
@@ -346,9 +347,15 @@ function EventsGridContent({
                           loading="lazy"
                         />
                       ) : (
-                        <div className="flex h-full w-full items-center justify-center text-zinc-400">
-                          <Camera className="h-8 w-8 stroke-1" />
-                        </div>
+                        <EventCoverPlaceholder
+                          seed={
+                            item.album.coordinate ||
+                            item.album.id ||
+                            item.album.title
+                          }
+                          title={item.album.title}
+                          size="sm"
+                        />
                       )}
                       <div className="absolute top-2 left-2">
                         <Badge
@@ -412,9 +419,14 @@ function EventsGridContent({
                       loading="lazy"
                     />
                   ) : (
-                    <div className="flex h-full w-full items-center justify-center text-zinc-400">
-                      <Camera className="h-10 w-10 stroke-1" />
-                    </div>
+                    <EventCoverPlaceholder
+                      seed={
+                        item.album.coordinate ||
+                        item.album.id ||
+                        item.album.title
+                      }
+                      title={item.album.title}
+                    />
                   )}
 
                   {/* Photo Count Badge */}
