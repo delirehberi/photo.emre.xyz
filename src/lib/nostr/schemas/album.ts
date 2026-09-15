@@ -16,7 +16,15 @@ import type { NostrEvent, EventTemplate, EventAlbum } from '../types';
  * Formats a canonical Nostr coordinate for an Event Album.
  * Format: 31922:<pubkey>:<d-tag>
  */
-export function formatAlbumCoordinate(pubkey: string, dTag: string): string {
+/**
+ * Formats a canonical Nostr coordinate for an Event Album.
+ * Format: <kind>:<pubkey>:<d-tag> (e.g. 31922:<pubkey>:<dTag> or 31923:<pubkey>:<dTag>)
+ */
+export function formatAlbumCoordinate(
+  pubkey: string,
+  dTag: string,
+  kind: number = NOSTR_KINDS.EVENT_ALBUM,
+): string {
   const cleanPubkey = sanitizePubkey(pubkey);
   if (!cleanPubkey) {
     throw new Error(`Invalid pubkey for coordinate: ${pubkey}`);
@@ -25,11 +33,14 @@ export function formatAlbumCoordinate(pubkey: string, dTag: string): string {
   if (!cleanDTag) {
     throw new Error('Album d-tag identifier cannot be empty');
   }
-  return `${NOSTR_KINDS.EVENT_ALBUM}:${cleanPubkey}:${cleanDTag}`;
+  const targetKind =
+    kind && !Number.isNaN(kind) ? kind : NOSTR_KINDS.EVENT_ALBUM;
+  return `${targetKind}:${cleanPubkey}:${cleanDTag}`;
 }
 
 /**
  * Parses a canonical Nostr coordinate string into its component parts.
+ * Supports NIP-52 Calendar Event coordinates (31922, 31923) and parameterized replaceable kinds.
  */
 export function parseAlbumCoordinate(coordinate: string): {
   kind: number;
@@ -45,22 +56,24 @@ export function parseAlbumCoordinate(coordinate: string): {
   const kind = Number.parseInt(kindStr, 10);
   const dTag = rest.join(':');
 
-  if (kind !== NOSTR_KINDS.EVENT_ALBUM) {
-    throw new Error(
-      `Coordinate kind mismatch: expected ${NOSTR_KINDS.EVENT_ALBUM}, received ${kind}`,
-    );
+  if (Number.isNaN(kind) || kind <= 0) {
+    throw new Error(`Invalid coordinate kind: ${kindStr}`);
   }
 
   return { kind, pubkey, dTag };
 }
 
 /**
- * Parses a Kind 31922 Nostr event into an EventAlbum entity.
+ * Parses a NIP-52 Nostr event (Kind 31922 Date-based or Kind 31923 Time-based) into an EventAlbum entity.
  */
 export function parseEventAlbum(event: NostrEvent): EventAlbum {
-  if (event.kind !== NOSTR_KINDS.EVENT_ALBUM) {
+  const isSupportedKind =
+    event.kind === NOSTR_KINDS.EVENT_ALBUM ||
+    event.kind === NOSTR_KINDS.CALENDAR_EVENT_TIME;
+
+  if (!isSupportedKind) {
     throw new Error(
-      `Invalid event kind: expected ${NOSTR_KINDS.EVENT_ALBUM}, received ${event.kind}`,
+      `Invalid event kind: expected ${NOSTR_KINDS.EVENT_ALBUM} or ${NOSTR_KINDS.CALENDAR_EVENT_TIME}, received ${event.kind}`,
     );
   }
 
@@ -102,6 +115,11 @@ export function parseEventAlbum(event: NostrEvent): EventAlbum {
         const parsed = Number.parseInt(tagValue, 10);
         if (!Number.isNaN(parsed) && parsed > 0) {
           startDate = parsed;
+        } else {
+          const parsedDate = new Date(tagValue).getTime();
+          if (!Number.isNaN(parsedDate) && parsedDate > 0) {
+            startDate = Math.floor(parsedDate / 1000);
+          }
         }
         break;
       }
@@ -109,6 +127,11 @@ export function parseEventAlbum(event: NostrEvent): EventAlbum {
         const parsed = Number.parseInt(tagValue, 10);
         if (!Number.isNaN(parsed) && parsed > 0) {
           endDate = parsed;
+        } else {
+          const parsedDate = new Date(tagValue).getTime();
+          if (!Number.isNaN(parsedDate) && parsedDate > 0) {
+            endDate = Math.floor(parsedDate / 1000);
+          }
         }
         break;
       }
@@ -126,11 +149,11 @@ export function parseEventAlbum(event: NostrEvent): EventAlbum {
   }
 
   if (!dTag) {
-    throw new Error('Missing mandatory "d" tag on Kind 31922 Event Album');
+    throw new Error('Missing mandatory "d" tag on Event Album');
   }
 
   const description = sanitizeText(event.content, 10000) || undefined;
-  const coordinate = formatAlbumCoordinate(pubkey, dTag);
+  const coordinate = formatAlbumCoordinate(pubkey, dTag, event.kind);
 
   return {
     id: event.id,
@@ -145,23 +168,27 @@ export function parseEventAlbum(event: NostrEvent): EventAlbum {
     location,
     tags,
     coordinate,
+    kind: event.kind,
     createdAt: event.created_at,
   };
 }
 
 /**
- * Creates an unsigned EventTemplate for a Kind 31922 Event Album.
+ * Creates an unsigned EventTemplate for a NIP-52 Event Album (Kind 31922 or 31923).
  */
 export function createEventAlbumTemplate(params: {
   dTag: string;
   title: string;
   summary: string;
+  kind?: number;
   description?: string;
   coverImage?: string;
   startDate?: number;
   endDate?: number;
   location?: string;
   tags?: string[];
+  sourceCoordinate?: string;
+  sourceEventId?: string;
 }): EventTemplate {
   const cleanDTag = params.dTag.trim();
   if (!cleanDTag) {
@@ -190,6 +217,14 @@ export function createEventAlbumTemplate(params: {
     tags.push(['location', params.location.trim()]);
   }
 
+  if (params.sourceCoordinate?.trim()) {
+    tags.push(['a', params.sourceCoordinate.trim(), '', 'source']);
+  }
+
+  if (params.sourceEventId?.trim()) {
+    tags.push(['e', params.sourceEventId.trim(), '', 'source']);
+  }
+
   if (params.tags && Array.isArray(params.tags)) {
     for (const tag of params.tags) {
       const clean = tag.trim().toLowerCase();
@@ -200,7 +235,7 @@ export function createEventAlbumTemplate(params: {
   }
 
   return {
-    kind: NOSTR_KINDS.EVENT_ALBUM,
+    kind: params.kind || NOSTR_KINDS.EVENT_ALBUM,
     created_at: Math.floor(Date.now() / 1000),
     tags,
     content: params.description?.trim() || '',

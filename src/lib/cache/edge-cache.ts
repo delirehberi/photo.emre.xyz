@@ -7,10 +7,7 @@
  * edge invalidation for zero-database Nostr relay payloads and SSR pages.
  */
 
-import {
-  resolveAlbumTarget,
-  encodeAlbumNaddr,
-} from '@/lib/nostr/identifiers';
+import { resolveAlbumTarget, encodeAlbumNaddr } from '@/lib/nostr/identifiers';
 
 export interface CacheOptions {
   /** Edge time-to-live in seconds (s-maxage) */

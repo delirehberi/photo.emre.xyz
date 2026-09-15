@@ -161,7 +161,37 @@ describe('Nostr Event Schemas', () => {
       expect(album.coordinate).toBe(`31922:${TEST_PUBKEY}:berlin-hackathon`);
     });
 
-    it('creates valid Event Album template', () => {
+    it('parses valid Kind 31923 Time-based event successfully', () => {
+      const event: NostrEvent = {
+        id: 'event-album-31923',
+        pubkey: TEST_PUBKEY,
+        kind: 31923,
+        created_at: 1789397270,
+        tags: [
+          ['d', 'booking-1789397270312-zks09gx'],
+          ['title', 'Special Speaking Club Meetup'],
+          ['summary', 'Cosplay and English speaking'],
+          ['start', '1789399000'],
+          ['end', '1789406200'],
+          ['location', 'Kadikoy, Istanbul'],
+          ['t', 'speaking-club'],
+        ],
+        content: 'Event details here',
+        sig: 'sig',
+      };
+
+      const album = parseEventAlbum(event);
+      expect(album.id).toBe('event-album-31923');
+      expect(album.kind).toBe(31923);
+      expect(album.dTag).toBe('booking-1789397270312-zks09gx');
+      expect(album.title).toBe('Special Speaking Club Meetup');
+      expect(album.coordinate).toBe(
+        `31923:${TEST_PUBKEY}:booking-1789397270312-zks09gx`,
+      );
+      expect(album.location).toBe('Kadikoy, Istanbul');
+    });
+
+    it('creates valid Event Album template with source reference', () => {
       const template = createEventAlbumTemplate({
         dTag: 'summer-camp',
         title: 'Summer Camp',
@@ -169,6 +199,7 @@ describe('Nostr Event Schemas', () => {
         coverImage: 'https://media.emre.xyz/camp.jpg',
         startDate: 1715000000,
         tags: ['Nature', 'Summer'],
+        sourceCoordinate: '31923:somepubkey:sourcedtag',
       });
 
       expect(template.kind).toBe(31922);
@@ -179,6 +210,12 @@ describe('Nostr Event Schemas', () => {
         'https://media.emre.xyz/camp.jpg',
       ]);
       expect(template.tags).toContainEqual(['t', 'nature']);
+      expect(template.tags).toContainEqual([
+        'a',
+        '31923:somepubkey:sourcedtag',
+        '',
+        'source',
+      ]);
     });
   });
 

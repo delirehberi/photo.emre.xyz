@@ -8,10 +8,7 @@ import { parseEventAlbum } from '@/lib/nostr/schemas/album';
 import { parsePhotoEvent } from '@/lib/nostr/schemas/photo';
 import { parseProfileEvent } from '@/lib/nostr/schemas/profile';
 import { partitionPhotos } from '@/lib/nostr/partition';
-import {
-  resolveAlbumTarget,
-  encodeAlbumNaddr,
-} from '@/lib/nostr/identifiers';
+import { resolveAlbumTarget, encodeAlbumNaddr } from '@/lib/nostr/identifiers';
 import type {
   EventAlbum,
   PhotoMetadata,

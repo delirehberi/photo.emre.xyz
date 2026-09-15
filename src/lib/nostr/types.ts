@@ -25,7 +25,7 @@ export interface OrganizationProfile {
 }
 
 /**
- * Parsed Event Album (NIP-52 Kind 31922 Time-based Calendar Event Album)
+ * Parsed Event Album (NIP-52 Calendar Event Album - Kind 31922 Date-based or Kind 31923 Time-based)
  */
 export interface EventAlbum {
   id: string;
@@ -48,8 +48,31 @@ export interface EventAlbum {
   location?: string;
   /** Topic / category tags (t tags) */
   tags: string[];
-  /** Canonical coordinate: 31922:<pubkey>:<dTag> */
+  /** Canonical coordinate: <kind>:<pubkey>:<dTag> */
   coordinate: string;
+  /** NIP-52 event kind: 31922 (Date-Based) or 31923 (Time-Based) */
+  kind?: number;
+  /** Whether the event is featured in the platform curator list */
+  isCurated?: boolean;
+  /** Public keys of curators who included this event in their monthly lists */
+  curatorPubkeys?: string[];
+  createdAt: number;
+}
+
+/**
+ * Parsed Calendar List (NIP-52 Kind 31924 Monthly Federated Curation)
+ */
+export interface CalendarList {
+  id: string;
+  pubkey: string;
+  /** Monthly partition identifier, e.g. "events-2026-09" */
+  dTag: string;
+  /** Title of the calendar collection */
+  title?: string;
+  /** Description or curator note */
+  description?: string;
+  /** List of event coordinates (e.g. "31923:<pubkey>:<dTag>") */
+  coordinates: string[];
   createdAt: number;
 }
 

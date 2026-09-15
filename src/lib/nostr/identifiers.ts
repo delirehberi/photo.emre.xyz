@@ -12,12 +12,7 @@ import { NOSTR_KINDS, PRIMARY_RELAY } from './config';
 import { sanitizeCoordinate, sanitizePubkey } from './sanitizer';
 
 export type AlbumIdentifierType =
-  | 'naddr'
-  | 'nevent'
-  | 'note'
-  | 'hex'
-  | 'coordinate'
-  | 'slug';
+  'naddr' | 'nevent' | 'note' | 'hex' | 'coordinate' | 'slug';
 
 export interface ResolvedAlbumTarget {
   type: AlbumIdentifierType;
@@ -39,11 +34,38 @@ export interface ResolvedAlbumTarget {
 }
 
 /**
- * Encodes a Kind 31922 event album into a canonical NIP-19 naddr string.
+ * Extracts a canonical Nostr identifier or NIP-19 entity from raw input or full URLs.
+ * Supports:
+ * - Direct NIP-19 entities: naddr1..., nevent1..., note1...
+ * - URLs: https://ditto.pub/naddr1..., https://coracle.social/naddr1..., https://primal.net/e/nevent1...
+ * - nostr: URIs: nostr:naddr1...
+ */
+export function extractNip19FromInput(rawInput: string): string {
+  if (!rawInput || typeof rawInput !== 'string') return '';
+  const trimmed = rawInput.trim();
+
+  // 1. Strip 'nostr:' protocol prefix if present
+  const withoutProtocol = trimmed.replace(/^nostr:/i, '').trim();
+
+  // 2. Look for embedded NIP-19 bech32 entity inside URL paths or query strings
+  const nip19Match = withoutProtocol.match(
+    /\b(naddr1[a-z0-9]+|nevent1[a-z0-9]+|note1[a-z0-9]+)\b/i,
+  );
+  if (nip19Match) {
+    return nip19Match[1].toLowerCase();
+  }
+
+  // 3. Return trimmed string (could be a coordinate '31923:pubkey:dTag', hex ID, or slug)
+  return withoutProtocol;
+}
+
+/**
+ * Encodes a Kind 31922 or Kind 31923 event album into a canonical NIP-19 naddr string.
  */
 export function encodeAlbumNaddr(album: {
   pubkey: string;
   dTag: string;
+  kind?: number;
   relays?: readonly string[] | string[];
 }): string {
   const cleanPubkey = sanitizePubkey(album.pubkey);
@@ -61,8 +83,10 @@ export function encodeAlbumNaddr(album: {
       ? Array.from(album.relays).slice(0, 3)
       : [PRIMARY_RELAY];
 
+  const targetKind = album.kind || NOSTR_KINDS.EVENT_ALBUM;
+
   return nip19.naddrEncode({
-    kind: NOSTR_KINDS.EVENT_ALBUM,
+    kind: targetKind,
     pubkey: cleanPubkey,
     identifier: cleanDTag,
     relays: relayHints,
@@ -72,7 +96,8 @@ export function encodeAlbumNaddr(album: {
 /**
  * Parses and resolves any album input into structured Nostr query filters and relay hints.
  * Supports:
- * - naddr1... (NIP-19 parameterized replaceable event)
+ * - URLs containing NIP-19 entities (e.g. https://ditto.pub/naddr1...)
+ * - naddr1... (NIP-19 parameterized replaceable event, e.g. Kind 31922 or 31923)
  * - nevent1... (NIP-19 event pointer with relay hints)
  * - note1... (NIP-19 event ID)
  * - 64-char hex event ID
@@ -84,7 +109,10 @@ export function resolveAlbumTarget(rawInput: string): ResolvedAlbumTarget {
     throw new Error('Invalid album identifier: empty or non-string input');
   }
 
-  const input = rawInput.trim();
+  const input = extractNip19FromInput(rawInput);
+  if (!input) {
+    throw new Error('Invalid album identifier: empty input after extraction');
+  }
 
   // 1. Check for NIP-19 encoded string (naddr1, nevent1, note1)
   if (

@@ -1,9 +1,6 @@
 import { useState, useEffect, useMemo, useCallback, useContext } from 'react';
 import { formatEventDateTime } from '@/lib/nostr/events-data';
-import {
-  encodeAlbumNaddr,
-  resolveAlbumTarget,
-} from '@/lib/nostr/identifiers';
+import { encodeAlbumNaddr, resolveAlbumTarget } from '@/lib/nostr/identifiers';
 import { getSharedRelayPool } from '@/lib/nostr/pool';
 import { DEFAULT_RELAYS, NOSTR_KINDS } from '@/lib/nostr/config';
 import { parseEventAlbum } from '@/lib/nostr/schemas/album';
@@ -25,6 +22,11 @@ import { Badge } from '@/components/ui/badge';
 import { AuthProvider, AuthContext, useAuth } from '@/lib/nostr/auth/context';
 import { I18nProvider, useI18n, getLocalizedPath } from '@/lib/i18n/context';
 import {
+  parseCalendarList,
+  createCalendarListTemplate,
+  formatMonthDTag,
+} from '@/lib/nostr/schemas/calendar';
+import {
   ShieldCheck,
   Users,
   UploadCloud,
@@ -38,6 +40,7 @@ import {
   Check,
   AlertCircle,
   RefreshCw,
+  ListPlus,
 } from 'lucide-react';
 
 export interface DualSectionGalleryProps {
@@ -60,7 +63,7 @@ function DualSectionGalleryContent({
   initialLoading = false,
   targetId,
 }: DualSectionGalleryProps) {
-  const { user } = useAuth();
+  const { user, signer } = useAuth();
   const { t, locale } = useI18n();
 
   const [loading, setLoading] = useState(initialLoading || !initialAlbum);
@@ -73,9 +76,69 @@ function DualSectionGalleryContent({
   const [community, setCommunity] = useState<PhotoMetadata[]>(initialCommunity);
   const [notFound, setNotFound] = useState(false);
   const [copied, setCopied] = useState(false);
+  const [isAddingToList, setIsAddingToList] = useState(false);
+  const [addedToList, setAddedToList] = useState(false);
+
+  const handleAddToList = async () => {
+    if (!signer || !currentAlbum) return;
+    setIsAddingToList(true);
+    try {
+      const pool = getSharedRelayPool();
+      const userPubkey = await signer.getPublicKey();
+      const timestamp = currentAlbum.startDate || currentAlbum.createdAt;
+      const targetMonthDTag = formatMonthDTag(timestamp);
+
+      const existingListEvent = await pool.queryOne(
+        DEFAULT_RELAYS,
+        {
+          kinds: [NOSTR_KINDS.CALENDAR_LIST],
+          authors: [userPubkey],
+          '#d': [targetMonthDTag],
+        },
+        { timeoutMs: 3000 },
+      );
+
+      let coordinates: string[] = [];
+      let listTitle = `${targetMonthDTag.replace('events-', '')} Etkinlikleri`;
+      let listDescription = 'Phoem topluluk etkinlik albümleri koleksiyonu';
+
+      if (existingListEvent) {
+        try {
+          const parsed = parseCalendarList(existingListEvent);
+          coordinates = parsed.coordinates;
+          if (parsed.title) listTitle = parsed.title;
+          if (parsed.description) listDescription = parsed.description;
+        } catch {
+          // ignore corrupted list
+        }
+      }
+
+      if (!coordinates.includes(currentAlbum.coordinate)) {
+        coordinates.push(currentAlbum.coordinate);
+      }
+
+      const template = createCalendarListTemplate({
+        dTag: targetMonthDTag,
+        title: listTitle,
+        description: listDescription,
+        coordinates,
+      });
+
+      const signed = await signer.signEvent(template);
+      await pool.publishEvent(signed, DEFAULT_RELAYS);
+      setAddedToList(true);
+      setTimeout(() => setAddedToList(false), 3000);
+    } catch (err) {
+      console.warn('Could not add event to user calendar list:', err);
+    } finally {
+      setIsAddingToList(false);
+    }
+  };
 
   const isOrganizer =
-    user && currentAlbum && user.pubkey.toLowerCase() === currentAlbum.pubkey.toLowerCase();
+    user &&
+    currentAlbum &&
+    user.pubkey.toLowerCase() === currentAlbum.pubkey.toLowerCase();
 
   const [activeTab, setActiveTab] = useState<'official' | 'community'>(
     'official',
@@ -322,7 +385,9 @@ function DualSectionGalleryContent({
           </div>
           <div className="space-y-2">
             <h2 className="text-xl font-bold text-zinc-900 tracking-tight">
-              {locale === 'en' ? 'Album Not Found' : 'Etkinlik Albümü Bulunamadı'}
+              {locale === 'en'
+                ? 'Album Not Found'
+                : 'Etkinlik Albümü Bulunamadı'}
             </h2>
             <p className="mx-auto max-w-md text-xs text-zinc-500 leading-relaxed">
               {locale === 'en'
@@ -354,11 +419,7 @@ function DualSectionGalleryContent({
   }
 
   const formattedStartDate = currentAlbum.startDate
-    ? formatEventDateTime(
-        currentAlbum.startDate,
-        locale,
-        currentAlbum.endDate,
-      )
+    ? formatEventDateTime(currentAlbum.startDate, locale, currentAlbum.endDate)
     : '';
 
   return (
@@ -457,6 +518,38 @@ function DualSectionGalleryContent({
                 </>
               )}
             </Button>
+
+            {user && (
+              <Button
+                variant="outline"
+                size="default"
+                onClick={handleAddToList}
+                disabled={isAddingToList}
+                className="gap-2 text-xs border-zinc-200 hover:bg-zinc-50 font-medium"
+              >
+                {addedToList ? (
+                  <>
+                    <Check className="w-4 h-4 text-emerald-600" />
+                    <span className="text-emerald-700 font-semibold">
+                      {locale === 'en' ? 'In Calendar List' : 'Listeme Eklendi'}
+                    </span>
+                  </>
+                ) : (
+                  <>
+                    <ListPlus className="w-4 h-4 text-amber-500" />
+                    <span>
+                      {isAddingToList
+                        ? locale === 'en'
+                          ? 'Adding...'
+                          : 'Ekleniyor...'
+                        : locale === 'en'
+                          ? 'Add to Calendar'
+                          : 'Listeme Ekle'}
+                    </span>
+                  </>
+                )}
+              </Button>
+            )}
 
             <Button
               variant="default"

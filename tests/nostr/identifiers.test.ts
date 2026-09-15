@@ -110,6 +110,47 @@ describe('Nostr Album Identifiers (identifiers.ts)', () => {
     expect(resolved.dTag).toBe(sampleDTag);
   });
 
+  it('resolves full Ditto URL containing Kind 31923 naddr', () => {
+    const dittoUrl =
+      'https://ditto.pub/naddr1qvzqqqrukvpzq3hnc7an8npsryzfkaku38dmjm35cfrmmkngk6kcvvngy7fllzs6qqwkymm0dd5kueedxymnswfn8ymnydesxvcnytt6ddenqwt80qf0uuze';
+
+    const resolved = resolveAlbumTarget(dittoUrl);
+    expect(resolved.type).toBe('naddr');
+    expect(resolved.filter.kinds).toEqual([31923]);
+    expect(resolved.filter.authors).toEqual([
+      '46f3c7bb33cc3019049b76dc89dbb96e34c247bdda68b6ad8632682793ff8a1a',
+    ]);
+    expect(resolved.filter['#d']).toEqual(['booking-1789397270312-zks09gx']);
+    expect(resolved.pubkey).toBe(
+      '46f3c7bb33cc3019049b76dc89dbb96e34c247bdda68b6ad8632682793ff8a1a',
+    );
+    expect(resolved.dTag).toBe('booking-1789397270312-zks09gx');
+    expect(resolved.coordinate).toBe(
+      '31923:46f3c7bb33cc3019049b76dc89dbb96e34c247bdda68b6ad8632682793ff8a1a:booking-1789397270312-zks09gx',
+    );
+  });
+
+  it('correctly encodes a Kind 31923 event into an naddr string', () => {
+    const naddr = encodeAlbumNaddr({
+      kind: 31923,
+      pubkey: samplePubkey,
+      dTag: sampleDTag,
+      relays: ['wss://relay.damus.io'],
+    });
+
+    expect(naddr).toMatch(/^naddr1[a-z0-9]+$/);
+    const decoded = nip19.decode(naddr);
+    expect(decoded.type).toBe('naddr');
+    const data = decoded.data as {
+      kind: number;
+      pubkey: string;
+      identifier: string;
+    };
+    expect(data.kind).toBe(31923);
+    expect(data.pubkey).toBe(samplePubkey);
+    expect(data.identifier).toBe(sampleDTag);
+  });
+
   it('throws for invalid or empty inputs', () => {
     expect(() => resolveAlbumTarget('')).toThrow();
     // @ts-expect-error testing invalid argument

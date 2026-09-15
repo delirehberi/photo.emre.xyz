@@ -7,8 +7,9 @@
  */
 
 import { getSharedRelayPool } from './pool';
-import { DEFAULT_RELAYS, NOSTR_KINDS } from './config';
-import { parseEventAlbum } from './schemas/album';
+import { ADMIN_PUBKEY, DEFAULT_RELAYS, NOSTR_KINDS } from './config';
+import { parseEventAlbum, parseAlbumCoordinate } from './schemas/album';
+import { parseCalendarList, getAdjacentMonthDTags } from './schemas/calendar';
 import { parseProfileEvent } from './schemas/profile';
 import type { EventAlbum, OrganizationProfile } from './types';
 
@@ -19,38 +20,159 @@ export interface EventWithOrg {
 }
 
 /**
- * Fetches all live event albums (Kind 31922 tagged with 'event-album'),
- * counts their photos (Kind 1063), and resolves author organization profiles.
+ * Fetches all live event albums from:
+ * 1. Federated NIP-52 monthly calendar lists (Kind 31924) across ALL users for active months.
+ * 2. Legacy Kind 31922 and 31923 events tagged with 'event-album'.
+ * Counts their photos (Kind 1063), resolves author profiles, and flags curated events.
  */
 export async function fetchEventAlbums(): Promise<EventWithOrg[]> {
   const result: EventWithOrg[] = [];
   const knownCoordinates = new Set<string>();
+  const curatedCoordinates = new Set<string>();
+  const curatorsByCoordinate = new Map<string, Set<string>>();
 
   try {
     const pool = getSharedRelayPool();
-    // Query Kind 31922 events tagged with 'event-album'
-    const events = await pool.queryEvents(
-      DEFAULT_RELAYS,
-      {
-        kinds: [NOSTR_KINDS.EVENT_ALBUM],
-        '#t': ['event-album'],
-      },
-      { timeoutMs: 3000 },
-    );
+    const monthDTags = getAdjacentMonthDTags();
 
-    for (const ev of events) {
+    // Parallel fetch:
+    // 1. All Kind 31924 monthly calendar lists across ALL authors for active months
+    // 2. Legacy Kind 31922 & 31923 events tagged with 'event-album'
+    const [calendarEvents, legacyAlbumEvents] = await Promise.all([
+      pool
+        .queryEvents(
+          DEFAULT_RELAYS,
+          {
+            kinds: [NOSTR_KINDS.CALENDAR_LIST],
+            '#d': monthDTags,
+          },
+          { timeoutMs: 3000 },
+        )
+        .catch((err) => {
+          console.warn('Could not query calendar lists from relays:', err);
+          return [];
+        }),
+      pool
+        .queryEvents(
+          DEFAULT_RELAYS,
+          {
+            kinds: [NOSTR_KINDS.EVENT_ALBUM, NOSTR_KINDS.CALENDAR_EVENT_TIME],
+            '#t': ['event-album'],
+          },
+          { timeoutMs: 3000 },
+        )
+        .catch((err) => {
+          console.warn('Could not query legacy album events from relays:', err);
+          return [];
+        }),
+    ]);
+
+    // Process legacy albums first
+    for (const ev of legacyAlbumEvents) {
       try {
-        const parsedAlbum = parseEventAlbum(ev);
-        if (!knownCoordinates.has(parsedAlbum.coordinate)) {
-          knownCoordinates.add(parsedAlbum.coordinate);
+        const parsed = parseEventAlbum(ev);
+        if (!knownCoordinates.has(parsed.coordinate)) {
+          knownCoordinates.add(parsed.coordinate);
           result.push({
-            album: parsedAlbum,
+            album: parsed,
             org: null,
             photoCount: 0,
           });
         }
       } catch {
         // Discard invalid album events
+      }
+    }
+
+    // Process Kind 31924 federated calendar lists across all users
+    const missingCoordinates: Array<{
+      kind: number;
+      pubkey: string;
+      dTag: string;
+      coordinate: string;
+    }> = [];
+
+    for (const ev of calendarEvents) {
+      try {
+        const list = parseCalendarList(ev);
+        const isFromAdmin =
+          ev.pubkey.toLowerCase() === ADMIN_PUBKEY.toLowerCase();
+
+        for (const coord of list.coordinates) {
+          if (isFromAdmin) {
+            curatedCoordinates.add(coord);
+          }
+          if (!curatorsByCoordinate.has(coord)) {
+            curatorsByCoordinate.set(coord, new Set());
+          }
+          curatorsByCoordinate.get(coord)!.add(ev.pubkey);
+
+          if (!knownCoordinates.has(coord)) {
+            try {
+              const { kind, pubkey, dTag } = parseAlbumCoordinate(coord);
+              missingCoordinates.push({
+                kind,
+                pubkey,
+                dTag,
+                coordinate: coord,
+              });
+              knownCoordinates.add(coord);
+            } catch {
+              // Ignore malformed coordinate
+            }
+          }
+        }
+      } catch {
+        // Discard invalid calendar lists
+      }
+    }
+
+    // If there are coordinates in calendar lists that we haven't loaded yet, batch fetch them
+    if (missingCoordinates.length > 0) {
+      const kinds = Array.from(new Set(missingCoordinates.map((c) => c.kind)));
+      const authors = Array.from(
+        new Set(missingCoordinates.map((c) => c.pubkey)),
+      );
+      const dTags = Array.from(new Set(missingCoordinates.map((c) => c.dTag)));
+
+      const fetchedCalendarEvents = await pool
+        .queryEvents(
+          DEFAULT_RELAYS,
+          {
+            kinds,
+            authors,
+            '#d': dTags,
+          },
+          { timeoutMs: 3500 },
+        )
+        .catch((err) => {
+          console.warn(
+            'Could not batch query referenced calendar events:',
+            err,
+          );
+          return [];
+        });
+
+      for (const ev of fetchedCalendarEvents) {
+        try {
+          const parsed = parseEventAlbum(ev);
+          result.push({
+            album: parsed,
+            org: null,
+            photoCount: 0,
+          });
+        } catch {
+          // Discard invalid
+        }
+      }
+    }
+
+    // Attach curation metadata to all result items
+    for (const item of result) {
+      item.album.isCurated = curatedCoordinates.has(item.album.coordinate);
+      const curators = curatorsByCoordinate.get(item.album.coordinate);
+      if (curators && curators.size > 0) {
+        item.album.curatorPubkeys = Array.from(curators);
       }
     }
   } catch (err) {
@@ -62,8 +184,11 @@ export async function fetchEventAlbums(): Promise<EventWithOrg[]> {
     return [];
   }
 
-  // Sort albums by start date or creation date (newest first)
+  // Sort albums: curated first, then newest start date or creation date
   result.sort((a, b) => {
+    if (a.album.isCurated && !b.album.isCurated) return -1;
+    if (!a.album.isCurated && b.album.isCurated) return 1;
+
     const timeA = a.album.startDate || a.album.createdAt;
     const timeB = b.album.startDate || b.album.createdAt;
     return timeB - timeA;
@@ -163,20 +288,48 @@ export async function fetchOrgWithEvents(pubkey: string): Promise<{
   org: OrganizationProfile;
   events: EventAlbum[];
 }> {
-  let org: OrganizationProfile | null = null;
+  const pool = getSharedRelayPool();
 
-  try {
-    const pool = getSharedRelayPool();
-    const profileEv = await pool.queryOne(DEFAULT_RELAYS, {
-      kinds: [NOSTR_KINDS.METADATA],
-      authors: [pubkey],
+  const profilePromise = pool
+    .queryOne(
+      DEFAULT_RELAYS,
+      {
+        kinds: [NOSTR_KINDS.METADATA],
+        authors: [pubkey],
+      },
+      { timeoutMs: 3500 },
+    )
+    .catch((err) => {
+      console.warn('Could not fetch org profile from relay:', err);
+      return null;
     });
 
-    if (profileEv) {
-      org = parseProfileEvent(profileEv);
+  const eventsPromise = pool
+    .queryEvents(
+      DEFAULT_RELAYS,
+      {
+        kinds: [NOSTR_KINDS.EVENT_ALBUM],
+        authors: [pubkey],
+      },
+      { timeoutMs: 3500 },
+    )
+    .catch((err) => {
+      console.warn('Could not query events for pubkey:', err);
+      return [];
+    });
+
+  const [profileResult, eventsResult] = await Promise.allSettled([
+    profilePromise,
+    eventsPromise,
+  ]);
+
+  let org: OrganizationProfile | null = null;
+  if (profileResult.status === 'fulfilled' && profileResult.value) {
+    try {
+      org = parseProfileEvent(profileResult.value);
+    } catch {
+      // Invalid profile format
     }
-  } catch (err) {
-    console.warn('Could not fetch org profile from relay:', err);
   }
 
   if (!org) {
@@ -193,18 +346,11 @@ export async function fetchOrgWithEvents(pubkey: string): Promise<{
   const events: EventAlbum[] = [];
   const knownD = new Set<string>();
 
-  try {
-    const pool = getSharedRelayPool();
-    const albumEvents = await pool.queryEvents(
-      DEFAULT_RELAYS,
-      {
-        kinds: [NOSTR_KINDS.EVENT_ALBUM],
-        authors: [pubkey],
-      },
-      { timeoutMs: 3000 },
-    );
-
-    for (const ev of albumEvents) {
+  if (
+    eventsResult.status === 'fulfilled' &&
+    Array.isArray(eventsResult.value)
+  ) {
+    for (const ev of eventsResult.value) {
       try {
         const parsed = parseEventAlbum(ev);
         if (!knownD.has(parsed.dTag)) {
@@ -215,8 +361,6 @@ export async function fetchOrgWithEvents(pubkey: string): Promise<{
         // Skip invalid album events
       }
     }
-  } catch (err) {
-    console.warn('Could not query events for pubkey:', err);
   }
 
   // Sort events newest first

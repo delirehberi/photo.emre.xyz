@@ -15,6 +15,7 @@ export class RelayPoolManager {
 
   constructor(customPool?: SimplePool) {
     this.pool = customPool || new SimplePool();
+    this.pool.maxWaitForConnection = 1500;
   }
 
   /**
