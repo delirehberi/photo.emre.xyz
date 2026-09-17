@@ -14,7 +14,9 @@
     "format": "prettier --write .",
     "storybook": "storybook dev -p 6006",
     "build-storybook": "storybook build",
-    "test": "vitest run"
+    "test": "vitest run",
+    "version:sync": "node scripts/sync-version.mjs",
+    "version": "node scripts/sync-version.mjs && git add src/lib/version.ts"
   },
   "dependencies": {
     "@astrojs/cloudflare": "^12.2.1",

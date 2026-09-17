@@ -1,7 +1,7 @@
 SHELL := /bin/bash
 NVM_RUN = source ~/.nvm/nvm.sh && nvm use
 
-.PHONY: all dev build preview deploy storybook build-storybook lint format check test clean help
+.PHONY: all dev build preview deploy storybook build-storybook lint format check test clean version version-patch version-minor version-major help
 
 all: help
 
@@ -22,6 +22,10 @@ help:
 	@echo "  check           Run Astro type check"
 	@echo "  test            Run unit tests"
 	@echo "  clean           Clean build artifacts and cache"
+	@echo "  version         Display current version and sync metadata"
+	@echo "  version-patch   Bump patch version (e.g. 0.1.0 -> 0.1.1)"
+	@echo "  version-minor   Bump minor version (e.g. 0.1.0 -> 0.2.0)"
+	@echo "  version-major   Bump major version (e.g. 0.1.0 -> 1.0.0)"
 
 dev:
 	$(NVM_RUN) && npm run dev
@@ -55,4 +59,16 @@ test:
 
 clean:
 	rm -rf dist .astro node_modules/.cache storybook-static
+
+version:
+	$(NVM_RUN) && node scripts/sync-version.mjs && node -p "'Current version: ' + require('./package.json').version"
+
+version-patch:
+	$(NVM_RUN) && npm version patch
+
+version-minor:
+	$(NVM_RUN) && npm version minor
+
+version-major:
+	$(NVM_RUN) && npm version major
 
