@@ -37,7 +37,12 @@ import {
   Menu,
   X,
 } from 'lucide-react';
-import { PRIMARY_RELAY, GLOBAL_RELAYS, ADMIN_PUBKEY } from '@/lib/nostr/config';
+import {
+  PRIMARY_RELAY,
+  GLOBAL_RELAYS,
+  CACHE_RELAY_URL,
+  ADMIN_PUBKEY,
+} from '@/lib/nostr/config';
 import { pubkeyToNpub } from '@/lib/nostr/keys';
 
 type AdminTab =
@@ -45,7 +50,7 @@ type AdminTab =
 
 function AdminDashboardContent() {
   const { user, logout } = useAuth();
-  const { t } = useI18n();
+  const { t, locale } = useI18n();
   const [activeTab, setActiveTab] = useState<AdminTab>('dashboard');
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [copiedNpub, setCopiedNpub] = useState(false);
@@ -299,6 +304,26 @@ function AdminDashboardContent() {
                 </div>
 
                 <div className="space-y-2 text-xs">
+                  {/* Read Cache Relay */}
+                  <div className="flex items-center justify-between p-2.5 rounded-xl bg-indigo-50/50 border border-indigo-200/60">
+                    <div>
+                      <span className="font-semibold text-zinc-900 block">
+                        {CACHE_RELAY_URL}
+                      </span>
+                      <span className="text-[10px] text-indigo-800">
+                        {locale === 'en'
+                          ? 'Read Cache Relay (Aggregated Upstream)'
+                          : 'Okuma Önbellek Rölesi (Toplu Üst Röleler)'}
+                      </span>
+                    </div>
+                    <Badge
+                      variant="official"
+                      className="text-[10px] px-1.5 py-0.5 bg-indigo-600 text-white"
+                    >
+                      {locale === 'en' ? 'Active Cache' : 'Önbellek Aktif'}
+                    </Badge>
+                  </div>
+
                   {/* Primary Relay */}
                   <div className="flex items-center justify-between p-2.5 rounded-xl bg-amber-50/50 border border-amber-200/60">
                     <div>

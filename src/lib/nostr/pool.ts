@@ -7,7 +7,7 @@ import './safe-websocket';
 import { SimplePool } from 'nostr-tools/pool';
 import type { Filter } from 'nostr-tools/filter';
 import { verifyEvent } from 'nostr-tools/pure';
-import { DEFAULT_RELAYS, RELAY_TIMEOUTS } from './config';
+import { DEFAULT_RELAYS, RELAY_TIMEOUTS, resolveReadRelays } from './config';
 import type { NostrEvent, QueryOptions } from './types';
 
 export class RelayPoolManager {
@@ -28,10 +28,11 @@ export class RelayPoolManager {
   /**
    * Queries the relay mesh in parallel with timeout deduplication.
    * Merges and deduplicates events by event ID across all responding relays.
+   * When cache relay is active, queries the aggregated read cache relay.
    *
    * @param relays Target relay URLs (defaults to DEFAULT_RELAYS)
    * @param filter Nostr subscription filter
-   * @param options Query configuration options (timeout, signature verification)
+   * @param options Query configuration options (timeout, signature verification, useCacheRelay)
    * @returns Array of deduplicated, verified NostrEvent objects
    */
   public async queryEvents(
@@ -42,7 +43,11 @@ export class RelayPoolManager {
     const timeoutMs = options.timeoutMs ?? RELAY_TIMEOUTS.QUERY;
     const verifySignatures = options.verifySignatures ?? true;
 
-    const relayUrls = Array.from(relays);
+    if (!relays || relays.length === 0) {
+      return [];
+    }
+
+    const relayUrls = resolveReadRelays(relays, options.useCacheRelay);
     if (relayUrls.length === 0) {
       return [];
     }
@@ -144,7 +149,11 @@ export class RelayPoolManager {
     const timeoutMs = options.timeoutMs ?? RELAY_TIMEOUTS.QUERY;
     const verifySignatures = options.verifySignatures ?? true;
 
-    const relayUrls = Array.from(relays);
+    if (!relays || relays.length === 0) {
+      return null;
+    }
+
+    const relayUrls = resolveReadRelays(relays, options.useCacheRelay);
     if (relayUrls.length === 0) {
       return null;
     }
@@ -268,7 +277,9 @@ export class RelayPoolManager {
    */
   public close(relays: readonly string[] = DEFAULT_RELAYS): void {
     try {
-      this.pool.close(Array.from(relays));
+      const readUrls = resolveReadRelays(relays);
+      const allUrls = Array.from(new Set([...relays, ...readUrls]));
+      this.pool.close(allUrls);
     } catch {
       // Ignore errors on pool close
     }

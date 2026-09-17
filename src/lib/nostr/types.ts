@@ -145,4 +145,6 @@ export interface QueryOptions {
   timeoutMs?: number;
   /** Validate event signatures using verifyEvent (defaults to true) */
   verifySignatures?: boolean;
+  /** Route read query through the aggregated cache relay (defaults to true) */
+  useCacheRelay?: boolean;
 }

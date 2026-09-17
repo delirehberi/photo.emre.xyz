@@ -47,6 +47,125 @@ export const DEFAULT_RELAYS: readonly string[] =
     : [PRIMARY_RELAY, ...GLOBAL_RELAYS];
 
 /**
+ * Default aggregated Nostr Cache Relay for accelerating read-only operations.
+ */
+export const DEFAULT_CACHE_RELAY = 'wss://cache.nostr.org.tr';
+
+/**
+ * Dynamically resolved cache relay endpoint from environment or default.
+ */
+const envCacheRelayRaw =
+  (typeof process !== 'undefined' && process.env?.PUBLIC_CACHE_RELAY_URL) ||
+  (typeof import.meta !== 'undefined' &&
+    (import.meta as { env?: Record<string, string> }).env
+      ?.PUBLIC_CACHE_RELAY_URL);
+
+export const CACHE_RELAY_URL: string =
+  envCacheRelayRaw &&
+  (envCacheRelayRaw.startsWith('ws://') ||
+    envCacheRelayRaw.startsWith('wss://'))
+    ? envCacheRelayRaw.trim()
+    : DEFAULT_CACHE_RELAY;
+
+/**
+ * Flag determining if read-only queries should be routed through the cache relay.
+ */
+const envUseCacheRelayRaw =
+  (typeof process !== 'undefined' && process.env?.PUBLIC_USE_CACHE_RELAY) ||
+  (typeof import.meta !== 'undefined' &&
+    (import.meta as { env?: Record<string, string> }).env
+      ?.PUBLIC_USE_CACHE_RELAY);
+
+export const USE_CACHE_RELAY: boolean =
+  envUseCacheRelayRaw !== undefined
+    ? envUseCacheRelayRaw === 'true' || envUseCacheRelayRaw === '1'
+    : true;
+
+/**
+ * Formats a single aggregated Cache Relay URL containing target upstream relays.
+ * Example: wss://cache.nostr.org.tr?relays=wss://relay.damus.io,wss://nos.lol,wss://relay.primal.net
+ *
+ * @param upstreamRelays Target upstream relays to query via cache
+ * @param cacheBaseUrl Base cache relay URL (defaults to CACHE_RELAY_URL)
+ * @returns Parameterized Cache Relay WebSocket URL
+ */
+export function getCacheRelayUrl(
+  upstreamRelays: readonly string[] = DEFAULT_RELAYS,
+  cacheBaseUrl: string = CACHE_RELAY_URL,
+): string {
+  const cleanBase = (cacheBaseUrl || DEFAULT_CACHE_RELAY)
+    .trim()
+    .replace(/\/+$/, '');
+  const candidateRelays =
+    upstreamRelays && upstreamRelays.length > 0
+      ? upstreamRelays
+      : DEFAULT_RELAYS;
+
+  const validUpstreams: string[] = [];
+  const seen = new Set<string>();
+
+  for (const r of candidateRelays) {
+    if (!r || typeof r !== 'string') continue;
+    const trimmed = r.trim().replace(/\/+$/, '');
+    if (!trimmed.startsWith('ws://') && !trimmed.startsWith('wss://')) continue;
+
+    // Avoid recursing if an input relay is already a parameterized cache relay URL
+    if (trimmed.includes('?relays=')) {
+      try {
+        const url = new URL(trimmed);
+        const nestedRelays = url.searchParams.get('relays');
+        if (nestedRelays) {
+          for (const sub of nestedRelays.split(',')) {
+            const cleanSub = sub.trim().replace(/\/+$/, '');
+            if (
+              (cleanSub.startsWith('ws://') || cleanSub.startsWith('wss://')) &&
+              !seen.has(cleanSub)
+            ) {
+              seen.add(cleanSub);
+              validUpstreams.push(cleanSub);
+            }
+          }
+        }
+      } catch {
+        // If URL parsing fails, proceed
+      }
+      continue;
+    }
+
+    if (!seen.has(trimmed)) {
+      seen.add(trimmed);
+      validUpstreams.push(trimmed);
+    }
+  }
+
+  const finalUpstreams =
+    validUpstreams.length > 0 ? validUpstreams : Array.from(DEFAULT_RELAYS);
+  const separator = cleanBase.includes('?') ? '&' : '?';
+  return `${cleanBase}${separator}relays=${finalUpstreams.join(',')}`;
+}
+
+/**
+ * Resolves the effective relay list for read operations.
+ * When cache relay is active, collapses multiple upstream relays into a single aggregated cache relay URL.
+ *
+ * @param relays Target relays (defaults to DEFAULT_RELAYS)
+ * @param useCache Whether to route through cache relay (defaults to USE_CACHE_RELAY)
+ * @returns Array containing either the single aggregated cache relay URL or raw relay URLs
+ */
+export function resolveReadRelays(
+  relays?: readonly string[],
+  useCache: boolean = USE_CACHE_RELAY,
+): string[] {
+  const targetRelays = relays && relays.length > 0 ? relays : DEFAULT_RELAYS;
+
+  if (useCache && CACHE_RELAY_URL) {
+    return [getCacheRelayUrl(targetRelays, CACHE_RELAY_URL)];
+  }
+
+  return Array.from(targetRelays);
+}
+
+/**
  * Supported Nostr Event Kinds for photo.emre.xyz
  */
 export const NOSTR_KINDS = {
