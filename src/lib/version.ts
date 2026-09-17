@@ -7,7 +7,7 @@
  */
 
 export const APP_NAME = "photo-emre-xyz" as const;
-export const APP_VERSION = "0.1.0" as const;
+export const APP_VERSION = "1.0.0" as const;
 export const APP_DESCRIPTION = "Sovereign, decentralized event photo album platform built on Nostr and Blossom" as const;
 export const APP_LICENSE = "MIT" as const;
 export const APP_REPOSITORY = "https://github.com/delirehberi/photo.emre.xyz" as const;

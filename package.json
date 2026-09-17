@@ -1,6 +1,6 @@
 {
   "name": "photo-emre-xyz",
-  "version": "0.1.0",
+  "version": "1.0.0",
   "description": "Sovereign, decentralized event photo album platform built on Nostr and Blossom",
   "license": "MIT",
   "private": true,
