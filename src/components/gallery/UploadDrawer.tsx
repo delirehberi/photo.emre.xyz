@@ -23,7 +23,8 @@ import { extractImageDimensions } from '@/lib/media/dimensions';
 import { extractExifFromBlob } from '@/lib/media/exif';
 import {
   createPhotoEventTemplate,
-  parsePhotoEvent,
+  createPictureEventTemplate,
+  extractPhotosFromEvent,
 } from '@/lib/nostr/schemas/photo';
 import { PhotoUploadSchema } from '@/lib/nostr/schemas/forms';
 import { getSharedRelayPool } from '@/lib/nostr/pool';
@@ -229,12 +230,17 @@ export function UploadDrawer({
     setIsUploading(true);
 
     try {
-      // 1. Direct Blossom Upload (Free in Beta)
+      // 1. Direct Blossom Uploads
       const targetServer =
         activeServerUrl || selectedServerUrl || DEFAULT_BLOSSOM_SERVER_URL;
       const blossom = new BlossomClient(targetServer);
       const pool = getSharedRelayPool();
-      const publishedPhotos: PhotoMetadata[] = [];
+
+      interface UploadedSuccess {
+        item: QueueItem;
+        descriptor: { url: string; sha256: string };
+      }
+      const successfulUploads: UploadedSuccess[] = [];
 
       for (const item of queue) {
         if (item.status === 'completed') continue;
@@ -283,39 +289,7 @@ export function UploadDrawer({
             },
           });
 
-          // Build Kind 1063 File Metadata Event Template
-          const template = createPhotoEventTemplate({
-            url: descriptor.url,
-            sha256: descriptor.sha256,
-            dimensions: item.dimensions || { width: 1920, height: 1080 },
-            albumCoordinate,
-            mimeType: item.file.type || 'image/jpeg',
-            alt: item.fileName,
-            summary: item.fileName.replace(/\.[^/.]+$/, ''),
-            exif: item.exif,
-          });
-
-          // Sign event with user signer
-          const signedEvent = await signer.signEvent(template);
-
-          // Broadcast event to Nostr relay mesh
-          await pool.publishEvent(signedEvent, DEFAULT_RELAYS);
-
-          const photoMetadata = parsePhotoEvent(signedEvent);
-          publishedPhotos.push(photoMetadata);
-
-          setQueue((prev) =>
-            prev.map((q) =>
-              q.id === item.id
-                ? {
-                    ...q,
-                    status: 'completed',
-                    progress: 100,
-                    publishedPhoto: photoMetadata,
-                  }
-                : q,
-            ),
-          );
+          successfulUploads.push({ item, descriptor });
         } catch (itemErr: unknown) {
           const errMsg =
             itemErr instanceof Error ? itemErr.message : 'Upload failed';
@@ -326,6 +300,74 @@ export function UploadDrawer({
           );
         }
       }
+
+      if (successfulUploads.length === 0) {
+        setIsUploading(false);
+        setGeneralError(t.upload.uploadServerFailed);
+        return;
+      }
+
+      // 2. Build Single NIP-68 Kind 20 (or Kind 1063 for 1 file) Nostr Event Template
+      const template =
+        successfulUploads.length > 1
+          ? createPictureEventTemplate({
+              albumCoordinate,
+              title: albumTitle || undefined,
+              items: successfulUploads.map(({ item, descriptor }) => ({
+                url: descriptor.url,
+                sha256: descriptor.sha256,
+                dimensions: item.dimensions || { width: 1920, height: 1080 },
+                mimeType: item.file.type || 'image/jpeg',
+                alt: item.fileName,
+                summary: item.fileName.replace(/\.[^/.]+$/, ''),
+                exif: item.exif,
+              })),
+            })
+          : createPhotoEventTemplate({
+              url: successfulUploads[0].descriptor.url,
+              sha256: successfulUploads[0].descriptor.sha256,
+              dimensions: successfulUploads[0].item.dimensions || {
+                width: 1920,
+                height: 1080,
+              },
+              albumCoordinate,
+              mimeType: successfulUploads[0].item.file.type || 'image/jpeg',
+              alt: successfulUploads[0].item.fileName,
+              summary: successfulUploads[0].item.fileName.replace(
+                /\.[^/.]+$/,
+                '',
+              ),
+              exif: successfulUploads[0].item.exif,
+            });
+
+      // 3. Sign event once with user signer
+      const signedEvent = await signer.signEvent(template);
+
+      // 4. Broadcast event to Nostr relay mesh
+      await pool.publishEvent(signedEvent, DEFAULT_RELAYS);
+
+      // 5. Unpack published photos
+      const publishedPhotos = extractPhotosFromEvent(signedEvent);
+
+      // 6. Map published photos back to queue items
+      setQueue((prev) =>
+        prev.map((q) => {
+          const matchedPhoto = publishedPhotos.find(
+            (p) =>
+              p.sha256.toLowerCase() === (q.sha256 || '').toLowerCase() ||
+              p.url === q.thumbnailUrl,
+          );
+          if (matchedPhoto) {
+            return {
+              ...q,
+              status: 'completed',
+              progress: 100,
+              publishedPhoto: matchedPhoto,
+            };
+          }
+          return q;
+        }),
+      );
 
       setIsUploading(false);
 

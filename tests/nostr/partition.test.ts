@@ -83,6 +83,38 @@ describe('Photo Partitioning', () => {
     expect(result.official.map((p) => p.createdAt)).toEqual([100, 200]);
   });
 
+  it('correctly partitions mixed Kind 1063 and Kind 20 photo items', () => {
+    const p1 = createMockPhoto({
+      pubkey: ORGANIZER_PUBKEY,
+      sha256: 'hash-official-1063',
+      kind: 1063,
+      createdAt: 100,
+    });
+    const p2 = createMockPhoto({
+      pubkey: ATTENDEE_PUBKEY,
+      sha256: 'hash-comm-nip68-1',
+      kind: 20,
+      eventId: 'event-nip68',
+      itemIndex: 0,
+      createdAt: 200,
+    });
+    const p3 = createMockPhoto({
+      pubkey: ATTENDEE_PUBKEY,
+      sha256: 'hash-comm-nip68-2',
+      kind: 20,
+      eventId: 'event-nip68',
+      itemIndex: 1,
+      createdAt: 200,
+    });
+
+    const result = partitionPhotos([p1, p2, p3], ORGANIZER_PUBKEY);
+    expect(result.official).toHaveLength(1);
+    expect(result.community).toHaveLength(2);
+    expect(result.official[0].kind).toBe(1063);
+    expect(result.community[0].kind).toBe(20);
+    expect(result.community[1].kind).toBe(20);
+  });
+
   it('throws for invalid organizer pubkey', () => {
     expect(() => partitionPhotos([], 'bad-key')).toThrow();
   });

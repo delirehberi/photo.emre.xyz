@@ -179,6 +179,8 @@ export const NOSTR_KINDS = {
   CALENDAR_EVENT_TIME: 31923,
   /** Kind 31924: NIP-52 Calendar List (Monthly Federated Curation) */
   CALENDAR_LIST: 31924,
+  /** Kind 20: NIP-68 Picture Event (Multi-image Post) */
+  PICTURE_EVENT: 20,
   /** Kind 1063: NIP-94 File Metadata (Photos) */
   PHOTO_METADATA: 1063,
   /** Kind 24242: Blossom BUD-11 Authorization */

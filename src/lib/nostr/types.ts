@@ -101,7 +101,7 @@ export interface PhotoExif {
 }
 
 /**
- * Parsed Photo Item (NIP-94 Kind 1063 File Metadata)
+ * Parsed Photo Item (NIP-94 Kind 1063 File Metadata or NIP-68 Kind 20 Picture Event item)
  */
 export interface PhotoMetadata {
   id: string;
@@ -114,7 +114,7 @@ export interface PhotoMetadata {
   mimeType: string;
   /** Dimensions and computed aspect ratio */
   dimensions: PhotoDimensions;
-  /** Event Album coordinate pointer (a tag): 31922:<pubkey>:<dTag> */
+  /** Event Album coordinate pointer (a tag): 31922:<pubkey>:<dTag> or 31923:<pubkey>:<dTag> */
   albumCoordinate: string;
   /** Optional BlurHash placeholder */
   blurhash?: string;
@@ -124,7 +124,41 @@ export interface PhotoMetadata {
   summary?: string;
   /** Optional technical EXIF metadata */
   exif?: PhotoExif;
+  /** Nostr event kind (1063 for NIP-94, 20 for NIP-68) */
+  kind?: number;
+  /** Parent event ID if unpacked from multi-photo Kind 20 event */
+  eventId?: string;
+  /** Index of item within multi-photo Kind 20 event */
+  itemIndex?: number;
+  /** Fallback mirror URLs */
+  fallbackUrls?: string[];
   createdAt: number;
+}
+
+/**
+ * Individual photo item descriptor for NIP-92 imeta tag generation
+ */
+export interface ImetaItem {
+  url: string;
+  sha256: string;
+  dimensions: { width: number; height: number };
+  mimeType?: string;
+  blurhash?: string;
+  alt?: string;
+  summary?: string;
+  fallbackUrls?: string[];
+  exif?: PhotoExif;
+}
+
+/**
+ * Parameters to create a NIP-68 Kind 20 Picture Event
+ */
+export interface PictureEventParams {
+  items: ImetaItem[];
+  albumCoordinate: string;
+  title?: string;
+  description?: string;
+  tags?: string[];
 }
 
 /**

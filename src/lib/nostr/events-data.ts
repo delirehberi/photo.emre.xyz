@@ -208,7 +208,7 @@ export async function fetchEventAlbums(): Promise<EventWithOrg[]> {
           .queryEvents(
             DEFAULT_RELAYS,
             {
-              kinds: [NOSTR_KINDS.PHOTO_METADATA],
+              kinds: [NOSTR_KINDS.PHOTO_METADATA, NOSTR_KINDS.PICTURE_EVENT],
               '#a': coordinates,
             },
             { timeoutMs: 2500 },
@@ -244,9 +244,16 @@ export async function fetchEventAlbums(): Promise<EventWithOrg[]> {
   if (photoSettled.status === 'fulfilled' && photoSettled.value.length > 0) {
     const countMap = new Map<string, number>();
     for (const pe of photoSettled.value) {
+      let photoWeight = 1;
+      if (pe.kind === NOSTR_KINDS.PICTURE_EVENT) {
+        const imetaCount = pe.tags.filter(
+          (t) => Array.isArray(t) && t[0]?.toLowerCase() === 'imeta',
+        ).length;
+        photoWeight = imetaCount > 0 ? imetaCount : 1;
+      }
       for (const tag of pe.tags) {
         if (Array.isArray(tag) && tag[0] === 'a' && tag[1]) {
-          countMap.set(tag[1], (countMap.get(tag[1]) || 0) + 1);
+          countMap.set(tag[1], (countMap.get(tag[1]) || 0) + photoWeight);
         }
       }
     }

@@ -4,7 +4,7 @@ import { encodeAlbumNaddr, resolveAlbumTarget } from '@/lib/nostr/identifiers';
 import { getSharedRelayPool } from '@/lib/nostr/pool';
 import { DEFAULT_RELAYS, NOSTR_KINDS } from '@/lib/nostr/config';
 import { parseEventAlbum } from '@/lib/nostr/schemas/album';
-import { parsePhotoEvent } from '@/lib/nostr/schemas/photo';
+import { extractPhotosFromEvent } from '@/lib/nostr/schemas/photo';
 import { parseProfileEvent } from '@/lib/nostr/schemas/profile';
 import { partitionPhotos } from '@/lib/nostr/partition';
 import type {
@@ -182,11 +182,11 @@ function DualSectionGalleryContent({
       const parsedAlbum = parseEventAlbum(albumEvent);
       setCurrentAlbum(parsedAlbum);
 
-      // Fetch Kind 1063 photos referencing this coordinate
+      // Fetch Kind 1063 & Kind 20 photos referencing this coordinate
       const photoEvents = await pool.queryEvents(
         targetRelays,
         {
-          kinds: [NOSTR_KINDS.PHOTO_METADATA],
+          kinds: [NOSTR_KINDS.PHOTO_METADATA, NOSTR_KINDS.PICTURE_EVENT],
           '#a': [parsedAlbum.coordinate],
         },
         { timeoutMs: 4000 },
@@ -195,7 +195,8 @@ function DualSectionGalleryContent({
       const parsedPhotos: PhotoMetadata[] = [];
       for (const pe of photoEvents) {
         try {
-          parsedPhotos.push(parsePhotoEvent(pe));
+          const extracted = extractPhotosFromEvent(pe, parsedAlbum.coordinate);
+          parsedPhotos.push(...extracted);
         } catch {
           // Discard invalid photo events
         }
